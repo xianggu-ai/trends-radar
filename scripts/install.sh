@@ -91,12 +91,17 @@ if [ ! -d "/Applications/Google Chrome.app" ] && ! command -v "Google Chrome" >/
 fi
 
 if [ -f "$ROOT/skills/trends-radar/SKILL.md" ]; then
-  SKILL_SOURCE_FILE="$ROOT/skills/trends-radar/SKILL.md"
+  SKILL_SOURCE_DIR="$ROOT/skills/trends-radar"
+  SKILL_SOURCE_FILE="$SKILL_SOURCE_DIR/SKILL.md"
 elif [ -f "$ROOT/SKILL.md" ]; then
+  SKILL_SOURCE_DIR="$ROOT"
   SKILL_SOURCE_FILE="$ROOT/SKILL.md"
 else
   die "Could not find SKILL.md in repo or installed layout."
 fi
+
+REFERENCES_SOURCE_DIR="$SKILL_SOURCE_DIR/references"
+ASSETS_SOURCE_DIR="$SKILL_SOURCE_DIR/assets"
 
 if [ -d "$ROOT/plugin/opencli-plugin-google-trends-rising" ]; then
   PLUGIN_SOURCE_DIR="$ROOT/plugin/opencli-plugin-google-trends-rising"
@@ -115,6 +120,8 @@ ROUND2_HELPER_SOURCE_FILE="$ROOT/scripts/round2-prepare.mjs"
 [ -f "$INSTALL_SOURCE_FILE" ] || die "Could not find install.sh."
 [ -f "$DOCTOR_SOURCE_FILE" ] || die "Could not find doctor.sh."
 [ -f "$ROUND2_HELPER_SOURCE_FILE" ] || die "Could not find round2-prepare.mjs."
+[ -d "$REFERENCES_SOURCE_DIR" ] || die "Could not find references/ in the skill bundle."
+[ -d "$ASSETS_SOURCE_DIR" ] || die "Could not find assets/ in the skill bundle."
 
 mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/vendor" "$PLUGIN_DIR"
 
@@ -123,6 +130,8 @@ copy_if_needed "$VERSION_SOURCE_FILE" "$SKILL_DIR/VERSION"
 copy_if_needed "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh"
 copy_if_needed "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh"
 copy_if_needed "$ROUND2_HELPER_SOURCE_FILE" "$SKILL_DIR/scripts/round2-prepare.mjs"
+sync_dir_if_needed "$REFERENCES_SOURCE_DIR" "$SKILL_DIR/references"
+sync_dir_if_needed "$ASSETS_SOURCE_DIR" "$SKILL_DIR/assets"
 chmod +x "$SKILL_DIR/scripts/install.sh" "$SKILL_DIR/scripts/doctor.sh" "$SKILL_DIR/scripts/round2-prepare.mjs"
 
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$SKILL_DIR/vendor/opencli-plugin-google-trends-rising"

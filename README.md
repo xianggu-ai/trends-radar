@@ -5,6 +5,7 @@ This repo ships a custom OpenCLI plugin plus a Codex Skill for collecting Google
 The public Skill name remains `trends-radar`.
 Detailed workflow rules and operational gotchas live under `skills/trends-radar/references/`.
 Example config and round-2 payloads live under `skills/trends-radar/assets/`.
+The installer copies those resources into the installed Skill bundle as well.
 
 ## Current Status
 
@@ -31,7 +32,7 @@ cd trends-radar
 
 After install:
 
-- run ~/.codex/skills/trends-radar/scripts/doctor.sh
+- run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh`
 - invoke the installed Skill explicitly by name: `使用 trends-radar`
 
 ## Upgrade
@@ -43,7 +44,7 @@ git pull
 ./scripts/install.sh
 ```
 
-This refreshes the installed Skill bundle under `~/.codex/skills/trends-radar/` and the runtime plugin under `~/.opencli/plugins/google-trends-rising/`.
+This refreshes the installed Skill bundle under `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/` and the runtime plugin under `${OPENCLI_HOME:-$HOME/.opencli}/plugins/google-trends-rising/`.
 
 ## Collection Prep
 
@@ -76,7 +77,7 @@ Then run round 2 through the Skill:
 The installed Skill uses:
 
 ```bash
-node ~/.codex/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json
+node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json
 ```
 
 Round 2 writes two files next to the input:
@@ -88,9 +89,9 @@ If the first-stage JSON is valid but has no candidates, round 2 writes `[]` to b
 
 ## Troubleshooting
 
-- Installed health check: run `~/.codex/skills/trends-radar/scripts/doctor.sh` whenever the workflow looks unhealthy or before the first collection attempt on a machine.
-- Installed repair: run `~/.codex/skills/trends-radar/scripts/install.sh` if the installed Skill or plugin is missing, stale, or damaged.
+- Installed health check: run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh` whenever the workflow looks unhealthy or before the first collection attempt on a machine.
+- Installed repair: run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh` if the installed Skill or plugin is missing, stale, or damaged.
 - If doctor reports an Apple Events failure, enable Chrome's `Allow JavaScript from Apple Events` setting and rerun doctor.
 - If collection fails after doctor passes, re-check browser prep: same geo, time, category, and search property, valid Google Trends compare pages, and any manual CAPTCHA clearance.
 - If extraction still fails on a correctly prepared page, treat that as a collector limitation and update the vendored plugin before relying on the result.
-- If round 2 fails, verify the first-stage JSON path, rerun `node ~/.codex/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`, and confirm the installed Skill bundle is current.
+- If round 2 fails, verify the first-stage JSON path, rerun `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`, and confirm the installed Skill bundle is current.

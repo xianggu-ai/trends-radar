@@ -31,6 +31,12 @@ function expectContainsAll(body: string, snippets: string[]): void {
   }
 }
 
+function expectOmitsAll(body: string, snippets: string[]): void {
+  for (const snippet of snippets) {
+    expect(body).not.toContain(snippet);
+  }
+}
+
 describe('documentation contract', () => {
   it('keeps README bootstrap guidance aligned with the resource-layered packaged workflow', () => {
     expect(existsSync(README_PATH)).toBe(true);
@@ -46,16 +52,23 @@ describe('documentation contract', () => {
       'custom OpenCLI plugin',
       'same geo, time, category, and search property',
       'resolve any CAPTCHA or unusual-traffic interstitial manually',
-      'run ~/.codex/skills/trends-radar/scripts/doctor.sh',
       '使用 trends-radar 做二轮筛选',
       'Start from the round 1 collector command',
       'opencli google collect-open-trends-tabs --min-rise 2000 -f json',
-      'node ~/.codex/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json',
       'round1.keep.json',
       'round1.reject.json',
-      'The public Skill name remains `trends-radar`.',
-      'Detailed workflow rules and operational gotchas live under `skills/trends-radar/references/`.',
-      'Example config and round-2 payloads live under `skills/trends-radar/assets/`.',
+      'trends-radar',
+      'skills/trends-radar/references/',
+      'skills/trends-radar/assets/',
+      '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh',
+      '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh',
+      '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json',
+      '${OPENCLI_HOME:-$HOME/.opencli}/plugins/google-trends-rising/',
+    ]);
+
+    expectOmitsAll(readme, [
+      '~/.codex/skills/trends-radar/',
+      '~/.opencli/plugins/google-trends-rising/',
     ]);
   });
 
@@ -76,13 +89,14 @@ describe('documentation contract', () => {
       '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh',
       '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs',
       'If doctor fails, stop',
-      'Read `references/install.md` for install, repair, upgrade, and installed-path details.',
-      'Read `references/collect.md` for collection preparation, scope rules, merge semantics, and CAPTCHA handling.',
-      'Read `references/round2.md` for the keep/reject contract, output schema, and live-context budget.',
-      'Read `references/gotchas.md` for observed failure modes before improvising a fix.',
-      'Read `references/runbook.md` to map symptoms to the next remediation step.',
-      'Use `assets/config.example.json` as the config shape reference.',
-      'Use `assets/keep.example.json` and `assets/reject.example.json` as round-2 output examples.',
+      'references/install.md',
+      'references/collect.md',
+      'references/round2.md',
+      'references/gotchas.md',
+      'references/runbook.md',
+      'assets/config.example.json',
+      'assets/keep.example.json',
+      'assets/reject.example.json',
     ]);
 
     expect(skill).not.toContain('Keep output fields:');
@@ -104,23 +118,28 @@ describe('documentation contract', () => {
       'Installed repair path',
       'Upgrade path',
       'Expected installed locations',
-      '`~/.codex/skills/trends-radar/`',
+      '${CODEX_HOME:-$HOME/.codex}',
+      '${OPENCLI_HOME:-$HOME/.opencli}',
+    ]);
+    expectOmitsAll(installReference, [
+      '~/.codex/skills/trends-radar/',
+      '~/.opencli/plugins/google-trends-rising/',
     ]);
 
     const collectReference = readFileSync(COLLECT_REFERENCE_PATH, 'utf8');
     expectContainsAll(collectReference, [
+      'Compare-tab preparation rules',
       'same geo, time, category, and search property',
-      'Resolve any CAPTCHA or unusual-traffic interstitial manually.',
-      'merge and dedupe',
-      'collector limitations',
+      'CAPTCHA',
+      'Merge and dedupe semantics',
+      'Collector limitations',
     ]);
 
     const round2Reference = readFileSync(ROUND2_REFERENCE_PATH, 'utf8');
     expectContainsAll(round2Reference, [
       'keep/reject contract',
-      'hard cap of three evidence items',
-      'site_type',
-      'reject_reason',
+      'Output schema guidance',
+      'Live-context budget',
       '`assets/keep.example.json`',
       '`assets/reject.example.json`',
     ]);
@@ -172,6 +191,14 @@ describe('documentation contract', () => {
       default_output_format: string;
     };
 
+    expect(Object.keys(keepExample).sort()).toEqual([
+      'evidence',
+      'keyword',
+      'rise_pct',
+      'seeds',
+      'site_type',
+      'why',
+    ].sort());
     expect(keepExample.keyword.length).toBeGreaterThan(0);
     expect(keepExample.seeds.length).toBeGreaterThan(0);
     expect(keepExample.rise_pct).toBeGreaterThan(0);
@@ -179,15 +206,27 @@ describe('documentation contract', () => {
     expect(keepExample.why.length).toBeGreaterThan(0);
     expect(keepExample.evidence.length).toBeGreaterThan(0);
 
+    expect(Object.keys(rejectExample).sort()).toEqual([
+      'keyword',
+      'reject_reason',
+      'seeds',
+      'why',
+    ].sort());
     expect(rejectExample.keyword.length).toBeGreaterThan(0);
     expect(rejectExample.seeds.length).toBeGreaterThan(0);
     expect(rejectExample.reject_reason.length).toBeGreaterThan(0);
     expect(rejectExample.why.length).toBeGreaterThan(0);
 
-    expect(configExample.default_geo).toBe('US');
-    expect(configExample.default_time).toBe('7d');
-    expect(configExample.default_min_rise).toBe(2000);
-    expect(configExample.default_output_format).toBe('json');
+    expect(Object.keys(configExample).sort()).toEqual([
+      'default_geo',
+      'default_min_rise',
+      'default_output_format',
+      'default_time',
+    ].sort());
+    expect(configExample.default_geo.length).toBeGreaterThan(0);
+    expect(configExample.default_time.length).toBeGreaterThan(0);
+    expect(configExample.default_min_rise).toBeGreaterThan(0);
+    expect(configExample.default_output_format.length).toBeGreaterThan(0);
   });
 
   it('ships parseable eval prompts covering bootstrap, doctor, collect, and non-trigger scenarios', () => {

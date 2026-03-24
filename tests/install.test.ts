@@ -6,19 +6,36 @@ import { execa } from 'execa';
 import { ROOT, setupFakeBin } from './helpers';
 
 describe('install.sh', () => {
-  it('copies the skill bundle and plugin into stable runtime locations', async () => {
+  it('copies the full skill bundle and plugin into the configured runtime locations', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
+    const codexHome = `${home}/custom-codex`;
+    const opencliHome = `${home}/custom-opencli`;
     const bin = setupFakeBin({ uname: 'Darwin', node: true, npm: true, opencli: true, chrome: true });
-    const installedHelperPath = `${home}/.codex/skills/trends-radar/scripts/round2-prepare.mjs`;
+    const installedRoot = `${codexHome}/skills/trends-radar`;
+    const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
 
     await execa('bash', ['scripts/install.sh'], {
       cwd: ROOT,
-      env: { HOME: home, PATH: `${bin}:/usr/bin:/bin`, GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1' },
+      env: {
+        HOME: home,
+        PATH: `${bin}:/usr/bin:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
     });
 
-    expect(readFileSync(`${home}/.codex/skills/trends-radar/SKILL.md`, 'utf8')).toContain('trends-radar');
-    expect(readFileSync(`${home}/.codex/skills/trends-radar/vendor/opencli-plugin-google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
-    expect(readFileSync(`${home}/.opencli/plugins/google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
+    expect(readFileSync(`${installedRoot}/SKILL.md`, 'utf8')).toContain('trends-radar');
+    expect(readFileSync(`${installedRoot}/vendor/opencli-plugin-google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
+    expect(readFileSync(`${opencliHome}/plugins/google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
+    expect(readFileSync(`${installedRoot}/references/install.md`, 'utf8')).toContain('Install Reference');
+    expect(readFileSync(`${installedRoot}/references/collect.md`, 'utf8')).toContain('Collect Reference');
+    expect(readFileSync(`${installedRoot}/references/round2.md`, 'utf8')).toContain('Round 2 Reference');
+    expect(readFileSync(`${installedRoot}/references/gotchas.md`, 'utf8')).toContain('Gotchas');
+    expect(readFileSync(`${installedRoot}/references/runbook.md`, 'utf8')).toContain('Runbook');
+    expect(readFileSync(`${installedRoot}/assets/config.example.json`, 'utf8')).toContain('default_geo');
+    expect(readFileSync(`${installedRoot}/assets/keep.example.json`, 'utf8')).toContain('"keyword"');
+    expect(readFileSync(`${installedRoot}/assets/reject.example.json`, 'utf8')).toContain('"reject_reason"');
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
@@ -44,26 +61,43 @@ describe('install.sh', () => {
 
   it('preserves the installed helper when repairing from the installed skill bundle after the source checkout is unavailable', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
+    const codexHome = `${home}/custom-codex`;
+    const opencliHome = `${home}/custom-opencli`;
     const bin = setupFakeBin({ uname: 'Darwin', node: true, npm: true, opencli: true, chrome: true });
-    const pluginPackage = `${home}/.opencli/plugins/google-trends-rising/package.json`;
-    const staleFile = `${home}/.opencli/plugins/google-trends-rising/stale.txt`;
-    const installedHelperPath = `${home}/.codex/skills/trends-radar/scripts/round2-prepare.mjs`;
+    const pluginPackage = `${opencliHome}/plugins/google-trends-rising/package.json`;
+    const staleFile = `${opencliHome}/plugins/google-trends-rising/stale.txt`;
+    const installedRoot = `${codexHome}/skills/trends-radar`;
+    const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
 
     await execa('bash', ['scripts/install.sh'], {
       cwd: ROOT,
-      env: { HOME: home, PATH: `${bin}:/usr/bin:/bin`, GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1' },
+      env: {
+        HOME: home,
+        PATH: `${bin}:/usr/bin:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
     });
 
     writeFileSync(pluginPackage, 'corrupted plugin package\n');
     writeFileSync(staleFile, 'stale runtime file\n');
 
-    await execa('bash', [`${home}/.codex/skills/trends-radar/scripts/install.sh`], {
+    await execa('bash', [`${installedRoot}/scripts/install.sh`], {
       cwd: '/',
-      env: { HOME: home, PATH: `${bin}:/bin`, GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1' },
+      env: {
+        HOME: home,
+        PATH: `${bin}:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
     });
 
     expect(readFileSync(pluginPackage, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(existsSync(staleFile)).toBe(false);
+    expect(readFileSync(`${installedRoot}/references/install.md`, 'utf8')).toContain('Install Reference');
+    expect(readFileSync(`${installedRoot}/assets/config.example.json`, 'utf8')).toContain('default_geo');
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
