@@ -1,4 +1,4 @@
-import { activateChromeTab, executeInChromeTab, listChromeTabs, orderTabsForCollection } from './chrome';
+import { activateChromeTab, clickNextQueryPage, executeInChromeTab, listChromeTabs, orderTabsForCollection } from './chrome';
 import { buildExtractorScript, normalizeExtractedPage } from './extract';
 import { mergeResults } from './merge';
 import type { CandidateRow, ChromeTab, ExtractedPage, RunConfig, RunEnvelope, RunScope, TabSummary } from './types';
@@ -7,11 +7,13 @@ interface RunDeps {
   listChromeTabs: typeof listChromeTabs;
   orderTabsForCollection: typeof orderTabsForCollection;
   activateChromeTab: typeof activateChromeTab;
+  clickNextQueryPage: typeof clickNextQueryPage;
   executeInChromeTab: typeof executeInChromeTab;
   buildExtractorScript: typeof buildExtractorScript;
   normalizeExtractedPage: typeof normalizeExtractedPage;
   mergeResults: typeof mergeResults;
   now: () => string;
+  sleep: (ms: number) => Promise<void>;
 }
 
 export async function runCollectOpenTrendsTabs(
@@ -22,11 +24,13 @@ export async function runCollectOpenTrendsTabs(
     listChromeTabs,
     orderTabsForCollection,
     activateChromeTab,
+    clickNextQueryPage,
     executeInChromeTab,
     buildExtractorScript,
     normalizeExtractedPage,
     mergeResults,
     now: () => new Date().toISOString(),
+    sleep: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
     ...deps,
   };
   const tabs = runtime.orderTabsForCollection(await runtime.listChromeTabs());
@@ -42,7 +46,7 @@ export async function runCollectOpenTrendsTabs(
 
     let extracted: ExtractedPage;
     try {
-      extracted = runtime.normalizeExtractedPage(await runtime.executeInChromeTab(extractorScript));
+      extracted = runtime.normalizeExtractedPage(await runtime.executeInChromeTab(tab, extractorScript));
     } catch (error) {
       summaries.push({
         tab_url: tab.url,
@@ -103,6 +107,7 @@ export async function runCollectOpenTrendsTabs(
     }
 
     candidateRows.push(...rows);
+    candidateRows.push(...(await collectAdditionalQueryPages(extracted, tab, sourceOrder, extractorScript, runtime)));
     summaries.push({
       ...summaryBase,
       status: 'ok',
@@ -155,6 +160,81 @@ function rowsFromExtractedPage(
   }
 
   return rows;
+}
+
+async function collectAdditionalQueryPages(
+  extracted: ExtractedPage,
+  tab: ChromeTab,
+  sourceOrder: number,
+  extractorScript: string,
+  runtime: RunDeps,
+): Promise<CandidateRow[]> {
+  const rows: CandidateRow[] = [];
+
+  for (const [seedIndex, seed] of extracted.seeds.entries()) {
+    let pageInfo = extracted.pageInfoBySeed[seed];
+    let guard = 0;
+
+    while (hasAdditionalQueryPages(pageInfo) && guard < 20) {
+      const clickResult = await runtime.clickNextQueryPage(tab, seedIndex);
+      if (!clickResult.clicked) {
+        break;
+      }
+
+      await runtime.sleep(250);
+      const nextPage = runtime.normalizeExtractedPage(await runtime.executeInChromeTab(tab, extractorScript));
+      const nextInfo = nextPage.pageInfoBySeed[seed];
+      if (!advancedPage(pageInfo, nextInfo)) {
+        break;
+      }
+
+      rows.push(...rowsForSeed(nextPage, seed, tab, sourceOrder, runtime.now()));
+      pageInfo = nextInfo;
+      guard += 1;
+    }
+  }
+
+  return rows;
+}
+
+function rowsForSeed(
+  extracted: ExtractedPage,
+  seed: string,
+  tab: ChromeTab,
+  sourceOrder: number,
+  capturedAt: string,
+): CandidateRow[] {
+  const sourceTabKey = `${tab.windowIndex}:${tab.tabIndex}`;
+
+  return (extracted.resultsBySeed[seed] ?? []).map((row) => ({
+    seed,
+    geo: extracted.scope.geo,
+    time: extracted.scope.time,
+    category: extracted.scope.category,
+    search_property: extracted.scope.searchProperty,
+    related_query: row.query,
+    rise_pct: row.risePct,
+    is_breakout: row.isBreakout,
+    rank: row.rank,
+    captured_at: capturedAt,
+    source_tab_key: sourceTabKey,
+    source_order: sourceOrder,
+  }));
+}
+
+function hasAdditionalQueryPages(pageInfo: ExtractedPage['pageInfoBySeed'][string] | undefined): boolean {
+  return Boolean(pageInfo && pageInfo.shownTo < pageInfo.total);
+}
+
+function advancedPage(
+  previous: ExtractedPage['pageInfoBySeed'][string] | undefined,
+  next: ExtractedPage['pageInfoBySeed'][string] | undefined,
+): boolean {
+  if (!previous || !next) {
+    return false;
+  }
+
+  return next.shownFrom > previous.shownFrom || next.shownTo > previous.shownTo;
 }
 
 function comparePageKey(extracted: ExtractedPage): string {

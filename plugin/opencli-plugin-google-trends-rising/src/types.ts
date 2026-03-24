@@ -22,8 +22,15 @@ export interface ExtractedPage {
   scope: RunScope;
   seeds: string[];
   resultsBySeed: Record<string, ExtractedRisingRow[]>;
+  pageInfoBySeed: Record<string, QueryPageInfo>;
   blocked: boolean;
   blockReason?: string;
+}
+
+export interface QueryPageInfo {
+  shownFrom: number;
+  shownTo: number;
+  total: number;
 }
 
 export interface CandidateRow {

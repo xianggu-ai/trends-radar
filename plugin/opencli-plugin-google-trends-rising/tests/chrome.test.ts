@@ -96,12 +96,25 @@ describe('chrome automation helpers', () => {
       stderr: '',
     });
 
-    const result = await executeInChromeTab<{ ok: boolean; count: number }>('JSON.stringify({ ok: true, count: 25 })', {
-      execFile,
-    });
+    const result = await executeInChromeTab<{ ok: boolean; count: number }>(
+      {
+        windowIndex: 2,
+        tabIndex: 1,
+        title: 'Google Trends - anime compare',
+        url: 'https://trends.google.com/trends/explore?date=now%207-d&geo=US&q=anime,manga,ghibli,one%20piece,naruto',
+        active: true,
+      },
+      'JSON.stringify({ ok: true, count: 25 })',
+      {
+        execFile,
+      },
+    );
 
     expect(result).toEqual({ ok: true, count: 25 });
-    expect(execFile).toHaveBeenCalledWith('osascript', ['-l', 'JavaScript', '-e', expect.stringContaining('execute')]);
+    expect(execFile).toHaveBeenCalledOnce();
+    expect(execFile.mock.calls[0]?.[0]).toBe('osascript');
+    expect(execFile.mock.calls[0]?.[1]?.[3]).toContain('windows[1]');
+    expect(execFile.mock.calls[0]?.[1]?.[3]).toContain('tabs[0]');
   });
 
   it('surfaces an actionable error when JavaScript from Apple Events is disabled in Chrome', async () => {
@@ -115,9 +128,44 @@ describe('chrome automation helpers', () => {
       );
 
     await expect(
-      executeInChromeTab('JSON.stringify({ ok: true })', {
-        execFile,
-      }),
+      executeInChromeTab(
+        {
+          windowIndex: 1,
+          tabIndex: 1,
+          title: 'Google Trends - agent compare',
+          url: 'https://trends.google.com/trends/explore?date=now%207-d&geo=US&q=agent,ai,anime,answer,analyzer',
+          active: true,
+        },
+        'JSON.stringify({ ok: true })',
+        {
+          execFile,
+        },
+      ),
     ).rejects.toThrow(/Apple Events/i);
+  });
+
+  it('clicks the next query paginator for a specific seed index', async () => {
+    const { clickNextQueryPage } = await import('../src/chrome');
+    const execFile = vi.fn().mockResolvedValue({
+      stdout: '{"clicked":true}',
+      stderr: '',
+    });
+
+    const result = await clickNextQueryPage(
+      {
+        windowIndex: 1,
+        tabIndex: 2,
+        title: 'Google Trends - compare',
+        url: 'https://trends.google.com/trends/explore?date=now%207-d&q=translator,generator,example,convert,online',
+        active: true,
+      },
+      3,
+      { execFile },
+    );
+
+    expect(result).toEqual({ clicked: true });
+    expect(execFile).toHaveBeenCalledOnce();
+    expect(execFile.mock.calls[0]?.[1]?.[3]).toContain('button[aria-label=\\"Next\\"]');
+    expect(execFile.mock.calls[0]?.[1]?.[3]).toContain('nextButtons[3]');
   });
 });
