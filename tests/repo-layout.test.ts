@@ -6,6 +6,7 @@ describe('repo layout', () => {
   it('contains the vendored plugin and required top-level artifacts', () => {
     expect(existsSync(`${ROOT}/VERSION`)).toBe(true);
     expect(existsSync(`${ROOT}/package.json`)).toBe(true);
+    expect(existsSync(`${ROOT}/scripts/round2-prepare.mjs`)).toBe(true);
     expect(existsSync(`${ROOT}/plugin/opencli-plugin-google-trends-rising/package.json`)).toBe(true);
     expect(existsSync(`${ROOT}/plugin/opencli-plugin-google-trends-rising/collect-open-trends-tabs.ts`)).toBe(true);
   });

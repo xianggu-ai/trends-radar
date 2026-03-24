@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "seed": "ghibli",
+      "related_query": "ghibli style image",
+      "is_breakout": false,
+      "rise_pct": 4200
+    },
+    {
+      "seed": "ghibli",
+      "related_query": "ghibli style image",
+      "is_breakout": false,
+      "rise_pct": 3900
+    },
+    {
+      "seed": "ai image generator",
+      "related_query": "ghibli style image",
+      "is_breakout": true,
+      "rise_pct": null
+    },
+    {
+      "seed": "agent",
+      "related_query": "agentic rag",
+      "is_breakout": false,
+      "rise_pct": 2300
+    },
+    {
+      "seed": "ai",
+      "related_query": "breakout only query",
+      "is_breakout": true,
+      "rise_pct": null
+    }
+  ]
+}
