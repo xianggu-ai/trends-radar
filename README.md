@@ -6,6 +6,9 @@ The public Skill name remains `trends-radar`.
 Detailed workflow rules and operational gotchas live under `skills/trends-radar/references/`.
 Example config and round-2 payloads live under `skills/trends-radar/assets/`.
 The installer copies those resources into the installed Skill bundle as well.
+Stable runtime data lives under `~/.codex/data/trends-radar/`.
+That directory keeps durable files such as `config.json` and the append-only `usage.jsonl`.
+This runtime memory survives upgrades because `./scripts/install.sh` refreshes the installed bundle separately from the stable data directory.
 
 ## Current Status
 

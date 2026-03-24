@@ -13,6 +13,20 @@ const DEFAULT_CONFIG = {
 };
 const REAL_NODE_DIR = dirname(process.execPath);
 
+type UsageRecord = {
+  timestamp: string;
+  action: string;
+  status: string;
+  reason?: string;
+};
+
+function readUsageLog(home: string): UsageRecord[] {
+  return readFileSync(join(home, '.codex/data/trends-radar/usage.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line) as UsageRecord);
+}
+
 function seedStableConfig(home: string, config: Record<string, unknown> = DEFAULT_CONFIG): void {
   const configDir = join(home, '.codex/data/trends-radar');
   mkdirSync(configDir, { recursive: true });
@@ -83,6 +97,15 @@ describe('doctor.sh', () => {
       { HOME: home, PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin` },
       `Stable config is malformed at ${home}/.codex/data/trends-radar/config.json. Run ${home}/.codex/skills/trends-radar/scripts/install.sh to repair it.`,
     );
+
+    expect(readUsageLog(home)).toEqual([
+      {
+        timestamp: expect.any(String),
+        action: 'doctor',
+        status: 'error',
+        reason: 'config_malformed',
+      },
+    ]);
   });
 
   it('fails with manual remediation guidance when the stable config file cannot be read', async () => {
@@ -183,5 +206,12 @@ describe('doctor.sh', () => {
     });
 
     expect(result.all).toContain('Doctor OK: install, plugin, and Apple Events probe all look healthy');
+    expect(readUsageLog(home)).toEqual([
+      {
+        timestamp: expect.any(String),
+        action: 'doctor',
+        status: 'ok',
+      },
+    ]);
   });
 });

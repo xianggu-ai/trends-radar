@@ -13,6 +13,20 @@ const DEFAULT_CONFIG = {
 };
 const REAL_NODE_DIR = dirname(process.execPath);
 
+type UsageRecord = {
+  timestamp: string;
+  action: string;
+  status: string;
+  reason?: string;
+};
+
+function readUsageLog(home: string): UsageRecord[] {
+  return readFileSync(join(home, '.codex/data/trends-radar/usage.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line) as UsageRecord);
+}
+
 describe('install.sh', () => {
   it('copies the full skill bundle and plugin into the configured runtime locations', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
@@ -22,6 +36,7 @@ describe('install.sh', () => {
     const installedRoot = `${codexHome}/skills/trends-radar`;
     const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
     const installedInitConfigPath = `${installedRoot}/scripts/init-config.mjs`;
+    const installedLogUsagePath = `${installedRoot}/scripts/log-usage.mjs`;
     const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
 
     await execa('bash', ['scripts/install.sh'], {
@@ -50,11 +65,20 @@ describe('install.sh', () => {
     expect(readFileSync(`${installedRoot}/assets/reject.example.json`, 'utf8')).toContain('"reject_reason"');
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
     expect(readFileSync(installedInitConfigPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/init-config.mjs'), 'utf8'));
+    expect(readFileSync(installedLogUsagePath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/log-usage.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
     expect(existsSync(`${home}/.codex/data/trends-radar`)).toBe(true);
     expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
     expect(existsSync(`${codexHome}/data/trends-radar/config.json`)).toBe(false);
+
+    expect(readUsageLog(home)).toEqual([
+      {
+        timestamp: expect.any(String),
+        action: 'install',
+        status: 'ok',
+      },
+    ]);
 
     const prepared = await execa('node', [installedHelperPath, join(ROOT, 'tests/fixtures/round2-input.json')], {
       cwd: '/',
@@ -127,6 +151,10 @@ describe('install.sh', () => {
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
     expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(existingConfig);
+    expect(readUsageLog(home).map(({ action, status }) => ({ action, status }))).toEqual([
+      { action: 'install', status: 'ok' },
+      { action: 'install', status: 'ok' },
+    ]);
 
     const prepared = await execa('node', [installedHelperPath, join(ROOT, 'tests/fixtures/round2-empty.json')], {
       cwd: '/',
