@@ -1,0 +1,16 @@
+[
+  {
+    "windowIndex": 1,
+    "tabIndex": 1,
+    "title": "Google Trends - US 7d",
+    "url": "https://trends.google.com/trends/explore?date=now%207-d&geo=US&q=agent,ai,anime,answer,analyzer",
+    "active": true
+  },
+  {
+    "windowIndex": 2,
+    "tabIndex": 1,
+    "title": "Google Trends - JP 30d",
+    "url": "https://trends.google.com/trends/explore?date=now%2030-d&geo=JP&q=anime,manga,ghibli,one%20piece,naruto",
+    "active": true
+  }
+]

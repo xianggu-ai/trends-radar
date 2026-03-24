@@ -1,0 +1,49 @@
+{
+  "scope": {
+    "geo": "US",
+    "time": "now 7-d"
+  },
+  "seeds": ["agent", "ai", "anime", "answer", "analyzer"],
+  "resultsBySeed": {
+    "agent": [
+      { "query": "ghibli style image", "value": "Breakout", "rank": 1 },
+      { "query": "agentic rag", "value": "+2300%", "rank": 2 },
+      { "query": "agent workflow", "value": "+1900%", "rank": 3 },
+      { "query": "agent prompt", "value": "+1800%", "rank": 4 },
+      { "query": "agent sdk", "value": "+1700%", "rank": 5 },
+      { "query": "agent graph", "value": "+1600%", "rank": 6 },
+      { "query": "agent runtime", "value": "+1500%", "rank": 7 },
+      { "query": "agent memory", "value": "+1400%", "rank": 8 },
+      { "query": "agent stack", "value": "+1300%", "rank": 9 },
+      { "query": "agent tool", "value": "+1200%", "rank": 10 },
+      { "query": "agent orchestrator", "value": "+1100%", "rank": 11 },
+      { "query": "agent compiler", "value": "+1000%", "rank": 12 },
+      { "query": "agent benchmark", "value": "+900%", "rank": 13 },
+      { "query": "agent swarm", "value": "+800%", "rank": 14 },
+      { "query": "agent eval", "value": "+700%", "rank": 15 },
+      { "query": "agent planner", "value": "+600%", "rank": 16 },
+      { "query": "agent tracing", "value": "+500%", "rank": 17 },
+      { "query": "agent deployment", "value": "+400%", "rank": 18 },
+      { "query": "agent dashboard", "value": "+390%", "rank": 19 },
+      { "query": "agent policy", "value": "+380%", "rank": 20 },
+      { "query": "agent tool use", "value": "+370%", "rank": 21 },
+      { "query": "agent context", "value": "+360%", "rank": 22 },
+      { "query": "agent retrieval", "value": "+350%", "rank": 23 },
+      { "query": "agent chain", "value": "+340%", "rank": 24 },
+      { "query": "agent state", "value": "+330%", "rank": 25 }
+    ],
+    "ai": [
+      { "query": "ai ghibli", "value": "Breakout", "rank": 1 },
+      { "query": "ai agent", "value": "+2100%", "rank": 2 }
+    ],
+    "anime": [
+      { "query": "anime ghibli", "value": "+2200%", "rank": 1 }
+    ],
+    "answer": [
+      { "query": "answer engine", "value": "+2050%", "rank": 1 }
+    ],
+    "analyzer": [
+      { "query": "video analyzer", "value": "+2400%", "rank": 1 }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "opencli-plugin-google-trends-rising",
+  "version": "0.1.0",
+  "type": "module",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.3.1"
+  },
+  "devDependencies": {
+    "@jackwener/opencli": "^1.3.1",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.0"
+  },
+  "scripts": {
+    "build": "esbuild collect-open-trends-tabs.ts --bundle --platform=node --format=esm --outfile=collect-open-trends-tabs.js --external:@jackwener/opencli --external:@jackwener/opencli/*",
+    "test": "vitest run"
+  }
+}

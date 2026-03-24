@@ -1,0 +1,30 @@
+[
+  {
+    "windowIndex": 1,
+    "tabIndex": 1,
+    "title": "Google Trends - agent compare",
+    "url": "https://trends.google.com/trends/explore?date=now%207-d&geo=US&q=agent,ai,anime,answer,analyzer",
+    "active": true
+  },
+  {
+    "windowIndex": 1,
+    "tabIndex": 2,
+    "title": "Google Trends - ai compare",
+    "url": "https://trends.google.com/trends/explore?date=now%207-d&geo=US&q=chatgpt,ghibli,midjourney,perplexity,mistral%20ai",
+    "active": false
+  },
+  {
+    "windowIndex": 2,
+    "tabIndex": 1,
+    "title": "Google Trends - anime compare",
+    "url": "https://trends.google.com/trends/explore?date=now%207-d&geo=US&q=anime,manga,ghibli,one%20piece,naruto",
+    "active": true
+  },
+  {
+    "windowIndex": 2,
+    "tabIndex": 2,
+    "title": "Example Domain",
+    "url": "https://example.com",
+    "active": false
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "evals": [
+    {
+      "name": "bootstrap-fresh-macos-machine",
+      "prompt": "I am on a fresh macOS machine and just cloned this repository. Nothing is installed yet under ~/.codex/skills or ~/.opencli/plugins. What should I do next to get this packaged workflow ready to use?"
+    },
+    {
+      "name": "doctor-apple-events-remediation",
+      "prompt": "Use google-trends-rising-collector on an already-installed machine where collection is failing because Google Chrome cannot run JavaScript from Apple Events. Guide the user through the next step without skipping past remediation."
+    },
+    {
+      "name": "collect-rising-queries",
+      "prompt": "Use google-trends-rising-collector to help me collect rising queries from several Google Trends compare tabs that I already prepared in Chrome."
+    },
+    {
+      "name": "generic-google-trends-request",
+      "prompt": "Can you give me a quick summary of what is trending on Google Trends today in the United States?"
+    }
+  ]
+}
