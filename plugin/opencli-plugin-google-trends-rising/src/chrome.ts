@@ -66,13 +66,13 @@ window.activeTabIndex = ${tab.tabIndex};
   );
 }
 
-export async function executeInChromeTab<T>(script: string, deps: Partial<ChromeDeps> = {}): Promise<T> {
+export async function executeInChromeTab<T>(tab: ChromeTab, script: string, deps: Partial<ChromeDeps> = {}): Promise<T> {
   const escapedScript = JSON.stringify(script);
   const stdout = await runJxa(
     `
 const chrome = Application('Google Chrome');
-const window = chrome.windows[0];
-const tab = window.activeTab();
+const window = chrome.windows[${tab.windowIndex - 1}];
+const tab = window.tabs[${tab.tabIndex - 1}];
 const result = tab.execute({ javascript: ${escapedScript} });
 result;
 `,
@@ -80,6 +80,32 @@ result;
   );
 
   return JSON.parse(stdout) as T;
+}
+
+export async function clickNextQueryPage(
+  tab: ChromeTab,
+  queryIndex: number,
+  deps: Partial<ChromeDeps> = {},
+): Promise<{ clicked: boolean; reason?: string }> {
+  return executeInChromeTab<{ clicked: boolean; reason?: string }>(
+    tab,
+    `
+(() => {
+  const nextButtons = Array.from(document.querySelectorAll('button[aria-label="Next"]'))
+    .filter((button) => /queries/i.test(button.parentElement?.textContent || ''));
+  const button = nextButtons[${queryIndex}];
+  if (!button) {
+    return JSON.stringify({ clicked: false, reason: 'not_found' });
+  }
+  if (button.disabled || button.getAttribute('disabled') !== null) {
+    return JSON.stringify({ clicked: false, reason: 'disabled' });
+  }
+  button.click();
+  return JSON.stringify({ clicked: true });
+})()
+`.trim(),
+    deps,
+  );
 }
 
 async function runJxa(script: string, deps: Partial<ChromeDeps>): Promise<string> {

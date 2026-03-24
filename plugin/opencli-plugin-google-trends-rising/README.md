@@ -11,14 +11,15 @@ If this project lives at `/Users/harris/codex-workspace/.worktrees/google-trends
 cd /Users/harris/codex-workspace/.worktrees/google-trends-related-rising/projects/opencli-plugin-google-trends-rising
 npm install
 npm run build
-mkdir -p ~/.opencli/plugins/google-trends-rising
-rsync -a --delete /Users/harris/codex-workspace/.worktrees/google-trends-related-rising/projects/opencli-plugin-google-trends-rising/ ~/.opencli/plugins/google-trends-rising/
+OPENCLI_PLUGIN_DIR="${OPENCLI_HOME:-$HOME/.opencli}/plugins/google-trends-rising"
+mkdir -p "$OPENCLI_PLUGIN_DIR"
+rsync -a --delete /Users/harris/codex-workspace/.worktrees/google-trends-related-rising/projects/opencli-plugin-google-trends-rising/ "$OPENCLI_PLUGIN_DIR"/
 opencli list | rg "collect-open-trends-tabs"
 ```
 
 Why sync instead of symlink:
 
-- current `opencli` plugin discovery scans real subdirectories under `~/.opencli/plugins/`
+- current `opencli` plugin discovery scans real subdirectories under `${OPENCLI_HOME:-$HOME/.opencli}/plugins/`
 - a symlink at the plugin directory level is skipped by discovery
 
 ## Usage

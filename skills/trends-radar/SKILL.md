@@ -1,6 +1,6 @@
 ---
 name: trends-radar
-description: Explicit-trigger-only workflow for the packaged Google Trends rising collector Skill and custom OpenCLI plugin.
+description: Use only when the user explicitly names `trends-radar` for the packaged Google Trends workflow on manually prepared Chrome tabs on macOS.
 ---
 
 # trends-radar
@@ -22,76 +22,58 @@ Trigger examples:
 - `collect`
 - `round2`
 
-## State-Driven Workflow
+## State Machine
 
-1. On a fresh machine, install happens from README.md plus scripts/install.sh.
-2. If the plugin is missing or damaged on an already-installed machine, run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`.
-3. If the installed workflow looks unhealthy, run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh`.
+1. Fresh-machine bootstrap starts from README.md plus `./scripts/install.sh`.
+2. If the installed Skill bundle or plugin is missing or damaged, run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`.
+3. Before any collection attempt, run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh`.
 4. If doctor fails, stop.
-5. Before `collect`, require every prepared Google Trends compare tab to use the same geo, time, category, and search property.
-6. Resolve any CAPTCHA or unusual-traffic interstitial manually.
-7. After doctor passes, run or guide `opencli google collect-open-trends-tabs --min-rise 2000 -f json`.
-8. If the user explicitly asks for round 2, require a first-stage JSON file path and run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
-9. If collection or round 2 fails, map the failure to environment remediation, install remediation, or collection remediation before trying again.
+5. If doctor passes, choose exactly one next action:
+   - `collect`: run or guide `opencli google collect-open-trends-tabs --min-rise 2000 -f json`
+   - `round2`: run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`
+6. If install, doctor, collect, or round 2 fails, consult the runbook and gotchas before retrying.
+
+## Read Path
+
+- `references/install.md`: install, repair, upgrade, installed-path details
+- `references/collect.md`: compare-tab prep, scope rules, merge semantics, CAPTCHA handling
+- `references/round2.md`: keep/reject contract, output schema, live-context budget
+- `references/gotchas.md`: observed failure modes before improvising a fix
+- `references/runbook.md`: verified live workflow, current limits, symptom -> remediation mapping
+- `assets/config.example.json`: durable config shape
+- `assets/keep.example.json` and `assets/reject.example.json`: round-2 output examples
+
+## Stable Runtime Data
+
+- Durable runtime data lives under `~/.codex/data/trends-radar/`.
+- Use the durable `config.json` plus `assets/config.example.json` to keep setup aligned with the installed workflow.
+- The installed `install` and `doctor` scripts append status records to `usage.jsonl`.
 
 ## install
 
-- Fresh machine: direct the user to the repository README bootstrap flow and `./scripts/install.sh`. The Skill is not the first-install entrypoint.
-- Already installed but damaged: use `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh` to repair the installed Skill bundle and the custom OpenCLI plugin.
-- If installed repair fails, keep the user in install/repair mode and do not proceed to collection.
+- Fresh-machine bootstrap stays in README.md plus `./scripts/install.sh`.
+- Installed repair uses `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`.
+- Read `references/install.md` before improvising a new repair path.
+- If install repair fails, stay in install mode and do not proceed to collection.
 
 ## doctor
 
-- Run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh` before any collection attempt.
-- Doctor confirms the packaged macOS workflow: Chrome, `node`, `npm`, `opencli`, the installed plugin, and Apple Events JavaScript execution.
-- If doctor reports that Chrome cannot execute JavaScript from Apple Events, tell the user to enable Chrome's Developer setting for JavaScript from Apple Events, then rerun doctor.
+- Run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh` before collection.
+- Read `references/runbook.md` for the verified live prerequisites.
 - If doctor fails, stop.
+- Use `references/runbook.md` to decide whether the next step is environment remediation or install remediation.
 
 ## collect
 
 - Only continue after doctor passes.
-- Confirm the user has prepared Google Trends compare tabs in desktop Chrome.
-- Require the same geo, time, category, and search property across every tab to be collected.
-- Resolve any CAPTCHA or unusual-traffic interstitial manually.
+- Confirm the user is collecting from prepared Google Trends compare tabs in desktop Chrome.
+- Keep the live-page preparation rules in `references/collect.md`.
 - Run `opencli google collect-open-trends-tabs --min-rise 2000 -f json` or guide the user to run it.
+- Use `references/gotchas.md` and `references/runbook.md` when collection output looks suspicious.
 
 ## round2
 
 - Only continue when the user explicitly asks for round 2, for example `使用 trends-radar 做二轮筛选`.
 - Ask only for the first-stage JSON path if it is missing.
 - Run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
-- Use the helper output to get the normalized candidates plus output paths.
-- Use each candidate's `source_context` as the first-stage context input for round-2 judgment.
-- If the helper returns no candidates, write `[]` to both output files and tell the user no candidates were available for round 2.
-- Write bare-array JSON outputs to the helper-provided `keepPath` and `rejectPath`.
-- Keep output fields:
-  - `keyword`
-  - `seeds`
-  - `rise_pct`
-  - `site_type`
-  - `why`
-  - `evidence`
-- Reject output fields:
-  - `keyword`
-  - `seeds`
-  - `reject_reason`
-  - `why`
-- Allowed `site_type` values:
-  - `tool`
-  - `game`
-  - `content`
-  - `mixed`
-- Allowed `reject_reason` values:
-  - `short_term_event`
-  - `noise`
-  - `not_siteable`
-  - `too_broad`
-  - `navigational`
-- Use lightweight live context with a hard cap of three evidence items per kept keyword.
-- If live context is unavailable, continue with first-stage context only and include one short fallback note inside the kept row's `evidence` array.
-
-## Failure Mapping
-
-- Environment remediation: wrong OS, Chrome missing, `opencli` missing, or Apple Events JavaScript not working. Send the user back to `doctor`.
-- Install remediation: the packaged plugin or Skill is missing or corrupted. Rerun `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`, then rerun doctor.
-- Collection remediation: no valid Trends tabs, mismatched scope, blocked pages, extraction failure, or round-2 input/output issues. Fix browser state or JSON input, then rerun the relevant command.
+- Use `references/round2.md` plus the example assets for the judgment contract and output shape.

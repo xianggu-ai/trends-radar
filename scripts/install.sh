@@ -91,12 +91,17 @@ if [ ! -d "/Applications/Google Chrome.app" ] && ! command -v "Google Chrome" >/
 fi
 
 if [ -f "$ROOT/skills/trends-radar/SKILL.md" ]; then
-  SKILL_SOURCE_FILE="$ROOT/skills/trends-radar/SKILL.md"
+  SKILL_SOURCE_DIR="$ROOT/skills/trends-radar"
+  SKILL_SOURCE_FILE="$SKILL_SOURCE_DIR/SKILL.md"
 elif [ -f "$ROOT/SKILL.md" ]; then
+  SKILL_SOURCE_DIR="$ROOT"
   SKILL_SOURCE_FILE="$ROOT/SKILL.md"
 else
   die "Could not find SKILL.md in repo or installed layout."
 fi
+
+REFERENCES_SOURCE_DIR="$SKILL_SOURCE_DIR/references"
+ASSETS_SOURCE_DIR="$SKILL_SOURCE_DIR/assets"
 
 if [ -d "$ROOT/plugin/opencli-plugin-google-trends-rising" ]; then
   PLUGIN_SOURCE_DIR="$ROOT/plugin/opencli-plugin-google-trends-rising"
@@ -109,12 +114,18 @@ fi
 VERSION_SOURCE_FILE="$ROOT/VERSION"
 INSTALL_SOURCE_FILE="$ROOT/scripts/install.sh"
 DOCTOR_SOURCE_FILE="$ROOT/scripts/doctor.sh"
+INIT_CONFIG_SOURCE_FILE="$ROOT/scripts/init-config.mjs"
 ROUND2_HELPER_SOURCE_FILE="$ROOT/scripts/round2-prepare.mjs"
+LOG_USAGE_SOURCE_FILE="$ROOT/scripts/log-usage.mjs"
 
 [ -f "$VERSION_SOURCE_FILE" ] || die "Could not find VERSION."
 [ -f "$INSTALL_SOURCE_FILE" ] || die "Could not find install.sh."
 [ -f "$DOCTOR_SOURCE_FILE" ] || die "Could not find doctor.sh."
+[ -f "$INIT_CONFIG_SOURCE_FILE" ] || die "Could not find init-config.mjs."
 [ -f "$ROUND2_HELPER_SOURCE_FILE" ] || die "Could not find round2-prepare.mjs."
+[ -f "$LOG_USAGE_SOURCE_FILE" ] || die "Could not find log-usage.mjs."
+[ -d "$REFERENCES_SOURCE_DIR" ] || die "Could not find references/ in the skill bundle."
+[ -d "$ASSETS_SOURCE_DIR" ] || die "Could not find assets/ in the skill bundle."
 
 mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/vendor" "$PLUGIN_DIR"
 
@@ -122,8 +133,14 @@ copy_if_needed "$SKILL_SOURCE_FILE" "$SKILL_DIR/SKILL.md"
 copy_if_needed "$VERSION_SOURCE_FILE" "$SKILL_DIR/VERSION"
 copy_if_needed "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh"
 copy_if_needed "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh"
+copy_if_needed "$INIT_CONFIG_SOURCE_FILE" "$SKILL_DIR/scripts/init-config.mjs"
 copy_if_needed "$ROUND2_HELPER_SOURCE_FILE" "$SKILL_DIR/scripts/round2-prepare.mjs"
-chmod +x "$SKILL_DIR/scripts/install.sh" "$SKILL_DIR/scripts/doctor.sh" "$SKILL_DIR/scripts/round2-prepare.mjs"
+copy_if_needed "$LOG_USAGE_SOURCE_FILE" "$SKILL_DIR/scripts/log-usage.mjs"
+sync_dir_if_needed "$REFERENCES_SOURCE_DIR" "$SKILL_DIR/references"
+sync_dir_if_needed "$ASSETS_SOURCE_DIR" "$SKILL_DIR/assets"
+chmod +x "$SKILL_DIR/scripts/install.sh" "$SKILL_DIR/scripts/doctor.sh" "$SKILL_DIR/scripts/init-config.mjs" "$SKILL_DIR/scripts/round2-prepare.mjs" "$SKILL_DIR/scripts/log-usage.mjs"
+
+node "$SKILL_DIR/scripts/init-config.mjs" >/dev/null
 
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$SKILL_DIR/vendor/opencli-plugin-google-trends-rising"
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$PLUGIN_DIR"
@@ -135,6 +152,8 @@ if [ "${GOOGLE_TRENDS_SKIP_PLUGIN_BUILD:-0}" != "1" ]; then
     npm run build
   )
 fi
+
+node "$SKILL_DIR/scripts/log-usage.mjs" install ok >/dev/null 2>&1 || true
 
 printf 'Installed skill path: %s\n' "$SKILL_DIR"
 printf 'Installed plugin path: %s\n' "$PLUGIN_DIR"

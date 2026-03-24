@@ -254,6 +254,81 @@ describe('runCollectOpenTrendsTabs', () => {
     expect(result.tabs.map((tab) => tab.status)).toEqual(['ok', 'duplicate_skipped', 'mismatch_skipped']);
     expect(result.run.processedTabs).toBe(1);
   });
+
+  it('paginates query results within a compare page until all rising rows are collected', async () => {
+    const { runCollectOpenTrendsTabs } = await import('../src/command');
+    const tab = createTab({
+      url: 'https://trends.google.com/trends/explore?date=now%207-d&q=Comparator,Navigator,Syncer,Connector,Cataloger',
+    });
+
+    const pageOne = {
+      scope: {
+        geo: '',
+        time: 'now 7-d',
+        category: '0',
+        searchProperty: '',
+      },
+      seeds: ['Comparator', 'Navigator'],
+      pageInfoBySeed: {
+        Comparator: { shownFrom: 1, shownTo: 5, total: 8 },
+        Navigator: { shownFrom: 1, shownTo: 5, total: 5 },
+      },
+      resultsBySeed: {
+        Comparator: [
+          { query: 'minecraft wordle', value: 'Breakout', rank: 1 },
+          { query: 'craftle', value: 'Breakout', rank: 2 },
+          { query: 'minecraftdle', value: '+4,400%', rank: 3 },
+          { query: 'minecraftle', value: '+3,900%', rank: 4 },
+          { query: 'minecraft wordle answer', value: '+2,300%', rank: 5 },
+        ],
+        Navigator: [
+          { query: 'shark navigator lift-away adv upright vacuum la300', value: '+3,100%', rank: 1 },
+        ],
+      },
+    };
+
+    const pageTwo = {
+      ...pageOne,
+      pageInfoBySeed: {
+        Comparator: { shownFrom: 6, shownTo: 8, total: 8 },
+        Navigator: { shownFrom: 1, shownTo: 5, total: 5 },
+      },
+      resultsBySeed: {
+        Comparator: [
+          { query: 'minecraft wordle solver', value: '+2,200%', rank: 6 },
+          { query: 'minecraft wordle list', value: '+2,150%', rank: 7 },
+          { query: 'minecraft wordle archive', value: '+1,900%', rank: 8 },
+        ],
+        Navigator: [
+          { query: 'shark navigator lift-away adv upright vacuum la300', value: '+3,100%', rank: 1 },
+        ],
+      },
+    };
+
+    const clickNextQueryPage = vi.fn().mockResolvedValue({ clicked: true });
+
+    const result = await runCollectOpenTrendsTabs(
+      { minRise: 2000 },
+      {
+        listChromeTabs: vi.fn().mockResolvedValue([tab]),
+        activateChromeTab: vi.fn().mockResolvedValue(undefined),
+        executeInChromeTab: vi.fn().mockResolvedValueOnce(pageOne).mockResolvedValueOnce(pageTwo),
+        clickNextQueryPage,
+        now: () => '2026-03-24T11:49:46.118Z',
+      },
+    );
+
+    expect(clickNextQueryPage).toHaveBeenCalledWith(tab, 0);
+    expect(result.results.filter((row) => row.seed === 'Comparator').map((row) => row.related_query)).toEqual([
+      'minecraft wordle',
+      'craftle',
+      'minecraftdle',
+      'minecraftle',
+      'minecraft wordle answer',
+      'minecraft wordle solver',
+      'minecraft wordle list',
+    ]);
+  });
 });
 
 describe('collect-open-trends-tabs entry module', () => {
