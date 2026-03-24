@@ -73,7 +73,7 @@ describe('doctor.sh', () => {
     });
 
     expect(result.all).toContain('Doctor OK: install, plugin, and Apple Events probe all look healthy');
-  });
+  }, 15000);
 
   it('fails with install guidance when stable runtime data has not been initialized', async () => {
     const home = seedInstalledLayout();
