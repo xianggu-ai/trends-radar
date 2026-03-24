@@ -109,10 +109,12 @@ fi
 VERSION_SOURCE_FILE="$ROOT/VERSION"
 INSTALL_SOURCE_FILE="$ROOT/scripts/install.sh"
 DOCTOR_SOURCE_FILE="$ROOT/scripts/doctor.sh"
+ROUND2_HELPER_SOURCE_FILE="$ROOT/scripts/round2-prepare.mjs"
 
 [ -f "$VERSION_SOURCE_FILE" ] || die "Could not find VERSION."
 [ -f "$INSTALL_SOURCE_FILE" ] || die "Could not find install.sh."
 [ -f "$DOCTOR_SOURCE_FILE" ] || die "Could not find doctor.sh."
+[ -f "$ROUND2_HELPER_SOURCE_FILE" ] || die "Could not find round2-prepare.mjs."
 
 mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/vendor" "$PLUGIN_DIR"
 
@@ -120,7 +122,8 @@ copy_if_needed "$SKILL_SOURCE_FILE" "$SKILL_DIR/SKILL.md"
 copy_if_needed "$VERSION_SOURCE_FILE" "$SKILL_DIR/VERSION"
 copy_if_needed "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh"
 copy_if_needed "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh"
-chmod +x "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh" "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh"
+copy_if_needed "$ROUND2_HELPER_SOURCE_FILE" "$SKILL_DIR/scripts/round2-prepare.mjs"
+chmod +x "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh" "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh" "$ROUND2_HELPER_SOURCE_FILE" "$SKILL_DIR/scripts/round2-prepare.mjs"
 
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$SKILL_DIR/vendor/opencli-plugin-google-trends-rising"
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$PLUGIN_DIR"
