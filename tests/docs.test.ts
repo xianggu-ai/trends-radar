@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ROOT } from './helpers';
 
 const README_PATH = `${ROOT}/README.md`;
+const PLUGIN_README_PATH = `${ROOT}/plugin/opencli-plugin-google-trends-rising/README.md`;
 const SKILL_PATH = `${ROOT}/skills/trends-radar/SKILL.md`;
 const REFERENCES_DIR = `${ROOT}/skills/trends-radar/references`;
 const ASSETS_DIR = `${ROOT}/skills/trends-radar/assets`;
@@ -69,6 +70,20 @@ describe('documentation contract', () => {
     expectOmitsAll(readme, [
       '~/.codex/skills/trends-radar/',
       '~/.opencli/plugins/google-trends-rising/',
+    ]);
+  });
+
+  it('keeps the plugin README aligned with configurable OpenCLI plugin paths', () => {
+    expect(existsSync(PLUGIN_README_PATH)).toBe(true);
+
+    const pluginReadme = readFileSync(PLUGIN_README_PATH, 'utf8');
+
+    expectContainsAll(pluginReadme, [
+      '${OPENCLI_HOME:-$HOME/.opencli}/plugins/google-trends-rising',
+    ]);
+
+    expectOmitsAll(pluginReadme, [
+      '~/.opencli/plugins/google-trends-rising',
     ]);
   });
 
