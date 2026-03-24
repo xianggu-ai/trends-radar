@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -39,6 +39,8 @@ describe('install.sh', () => {
     expect(readFileSync(`${installedRoot}/vendor/opencli-plugin-google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(readFileSync(`${opencliHome}/plugins/google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(readFileSync(`${installedRoot}/references/install.md`, 'utf8')).toContain('Install Reference');
+    expect(readFileSync(`${installedRoot}/references/install.md`, 'utf8')).toContain('malformed JSON');
+    expect(readFileSync(`${installedRoot}/references/install.md`, 'utf8')).toContain('fix the file permissions or remove the file manually');
     expect(readFileSync(`${installedRoot}/references/collect.md`, 'utf8')).toContain('Collect Reference');
     expect(readFileSync(`${installedRoot}/references/round2.md`, 'utf8')).toContain('Round 2 Reference');
     expect(readFileSync(`${installedRoot}/references/gotchas.md`, 'utf8')).toContain('Gotchas');
@@ -134,7 +136,7 @@ describe('install.sh', () => {
     expect(prepared.stdout).toContain('"candidates": []');
   });
 
-  it('repairs an unreadable stable config when rerunning the installed installer', async () => {
+  it('repairs a malformed stable config when rerunning the installed installer', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
     const codexHome = `${home}/custom-codex`;
     const opencliHome = `${home}/custom-opencli`;
@@ -167,5 +169,51 @@ describe('install.sh', () => {
     });
 
     expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
+  });
+
+  it('fails with manual remediation guidance when the stable config file cannot be read', async () => {
+    const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
+    const codexHome = `${home}/custom-codex`;
+    const opencliHome = `${home}/custom-opencli`;
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true });
+    const installedRoot = `${codexHome}/skills/trends-radar`;
+    const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
+
+    await execa('bash', ['scripts/install.sh'], {
+      cwd: ROOT,
+      env: {
+        HOME: home,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
+    });
+
+    chmodSync(stableConfigPath, 0o000);
+
+    try {
+      await execa('bash', [`${installedRoot}/scripts/install.sh`], {
+        all: true,
+        cwd: '/',
+        env: {
+          HOME: home,
+          PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
+          GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+          CODEX_HOME: codexHome,
+          OPENCLI_HOME: opencliHome,
+        },
+        reject: true,
+      });
+    } catch (error) {
+      expect((error as { all?: string }).all?.trim()).toBe(
+        `Stable config is unreadable at ${stableConfigPath}. Fix file permissions or remove it, then rerun install.`,
+      );
+      chmodSync(stableConfigPath, 0o600);
+      return;
+    }
+
+    chmodSync(stableConfigPath, 0o600);
+    throw new Error('install.sh unexpectedly succeeded');
   });
 });

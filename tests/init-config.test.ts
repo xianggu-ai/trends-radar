@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -74,5 +74,35 @@ describe('init-config.mjs', () => {
 
     expect(repaired.stdout.trim()).toBe(configPath);
     expect(JSON.parse(readFileSync(configPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
+  });
+
+  it('fails with manual remediation guidance when the config file cannot be read', async () => {
+    const home = mkdtempSync(join(tmpdir(), 'gt-config-'));
+    const configPath = `${home}/.codex/data/trends-radar/config.json`;
+
+    await execa('node', ['scripts/init-config.mjs'], {
+      cwd: ROOT,
+      env: { HOME: home },
+    });
+
+    chmodSync(configPath, 0o000);
+
+    try {
+      await execa('node', ['scripts/init-config.mjs'], {
+        all: true,
+        cwd: ROOT,
+        env: { HOME: home },
+        reject: true,
+      });
+    } catch (error) {
+      expect((error as { all?: string }).all?.trim()).toBe(
+        `Stable config is unreadable at ${configPath}. Fix file permissions or remove it, then rerun install.`,
+      );
+      chmodSync(configPath, 0o600);
+      return;
+    }
+
+    chmodSync(configPath, 0o600);
+    throw new Error('init-config.mjs unexpectedly succeeded');
   });
 });

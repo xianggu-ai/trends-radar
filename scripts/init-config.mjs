@@ -23,8 +23,17 @@ if (!existsSync(CONFIG_PATH)) {
   process.exit(0);
 }
 
+let currentConfigText;
+
 try {
-  JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+  currentConfigText = readFileSync(CONFIG_PATH, 'utf8');
+} catch (error) {
+  console.error(`Stable config is unreadable at ${CONFIG_PATH}. Fix file permissions or remove it, then rerun install.`);
+  process.exit(1);
+}
+
+try {
+  JSON.parse(currentConfigText);
 } catch (error) {
   writeFileSync(CONFIG_PATH, `${JSON.stringify(DEFAULT_CONFIG, null, 2)}\n`);
 }

@@ -22,9 +22,10 @@ command -v opencli >/dev/null 2>&1 || fail "opencli is required"
 [ -f "$SKILL_DIR/SKILL.md" ] || fail "Skill is not installed"
 [ -f "$PLUGIN_DIR/package.json" ] || fail "OpenCLI plugin is not installed"
 [ -d "$DATA_DIR" ] || fail "Stable data directory is missing at $DATA_DIR. Run $INSTALL_HINT to initialize it."
-[ -f "$CONFIG_PATH" ] || fail "Stable config is missing or unreadable at $CONFIG_PATH. Run $INSTALL_HINT to initialize it."
+[ -f "$CONFIG_PATH" ] || fail "Stable config is missing at $CONFIG_PATH. Run $INSTALL_HINT to initialize it."
+[ -r "$CONFIG_PATH" ] || fail "Stable config is unreadable at $CONFIG_PATH. Fix file permissions or remove it, then rerun $INSTALL_HINT."
 node -e "JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8'))" "$CONFIG_PATH" >/dev/null 2>&1 \
-  || fail "Stable config is missing or unreadable at $CONFIG_PATH. Run $INSTALL_HINT to initialize it."
+  || fail "Stable config is malformed at $CONFIG_PATH. Run $INSTALL_HINT to repair it."
 
 opencli google collect-open-trends-tabs --help >/dev/null 2>&1 || fail "OpenCLI collector command is not available"
 

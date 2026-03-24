@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -71,7 +71,7 @@ describe('doctor.sh', () => {
     );
   });
 
-  it('fails with install guidance when the stable config is unreadable', async () => {
+  it('fails with install guidance when the stable config is malformed JSON', async () => {
     const home = seedInstalledLayout();
     const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true, osascript: true });
     const configDir = join(home, '.codex/data/trends-radar');
@@ -81,7 +81,39 @@ describe('doctor.sh', () => {
 
     await expectDoctorFailure(
       { HOME: home, PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin` },
-      `Stable config is missing or unreadable at ${home}/.codex/data/trends-radar/config.json. Run ${home}/.codex/skills/trends-radar/scripts/install.sh to initialize it.`,
+      `Stable config is malformed at ${home}/.codex/data/trends-radar/config.json. Run ${home}/.codex/skills/trends-radar/scripts/install.sh to repair it.`,
+    );
+  });
+
+  it('fails with manual remediation guidance when the stable config file cannot be read', async () => {
+    const home = seedInstalledLayout();
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true, osascript: true });
+    const configDir = join(home, '.codex/data/trends-radar');
+    const configPath = join(configDir, 'config.json');
+
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(configPath, `${JSON.stringify(DEFAULT_CONFIG, null, 2)}\n`);
+    chmodSync(configPath, 0o000);
+
+    try {
+      await expectDoctorFailure(
+        { HOME: home, PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin` },
+        `Stable config is unreadable at ${home}/.codex/data/trends-radar/config.json. Fix file permissions or remove it, then rerun ${home}/.codex/skills/trends-radar/scripts/install.sh.`,
+      );
+    } finally {
+      chmodSync(configPath, 0o600);
+    }
+  });
+
+  it('fails with install guidance when the stable config is missing', async () => {
+    const home = seedInstalledLayout();
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true, osascript: true });
+
+    mkdirSync(join(home, '.codex/data/trends-radar'), { recursive: true });
+
+    await expectDoctorFailure(
+      { HOME: home, PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin` },
+      `Stable config is missing at ${home}/.codex/data/trends-radar/config.json. Run ${home}/.codex/skills/trends-radar/scripts/install.sh to initialize it.`,
     );
   });
 

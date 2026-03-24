@@ -11,6 +11,8 @@ Use this reference when the user explicitly asks `trends-radar` to install, repa
 ## Installed repair path
 
 - Use `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh` when the installed Skill bundle or the custom plugin looks stale, missing, or damaged.
+- Rerunning install also recreates `~/.codex/data/trends-radar/config.json` when the file is missing or contains malformed JSON.
+- If `~/.codex/data/trends-radar/config.json` cannot be read because of permissions or another file-access error, fix the file permissions or remove the file manually before rerunning install.
 - Keep the user in repair mode if the installed bundle cannot be refreshed cleanly.
 
 ## Upgrade path
