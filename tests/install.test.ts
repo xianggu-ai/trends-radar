@@ -1,24 +1,34 @@
 import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { execa } from 'execa';
 import { ROOT, setupFakeBin } from './helpers';
+
+const DEFAULT_CONFIG = {
+  default_geo: 'US',
+  default_time: '7d',
+  default_min_rise: 2000,
+  default_output_format: 'json',
+};
+const REAL_NODE_DIR = dirname(process.execPath);
 
 describe('install.sh', () => {
   it('copies the full skill bundle and plugin into the configured runtime locations', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
     const codexHome = `${home}/custom-codex`;
     const opencliHome = `${home}/custom-opencli`;
-    const bin = setupFakeBin({ uname: 'Darwin', node: true, npm: true, opencli: true, chrome: true });
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true });
     const installedRoot = `${codexHome}/skills/trends-radar`;
     const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
+    const installedInitConfigPath = `${installedRoot}/scripts/init-config.mjs`;
+    const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
 
     await execa('bash', ['scripts/install.sh'], {
       cwd: ROOT,
       env: {
         HOME: home,
-        PATH: `${bin}:/usr/bin:/bin`,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
         GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
         CODEX_HOME: codexHome,
         OPENCLI_HOME: opencliHome,
@@ -37,8 +47,12 @@ describe('install.sh', () => {
     expect(readFileSync(`${installedRoot}/assets/keep.example.json`, 'utf8')).toContain('"keyword"');
     expect(readFileSync(`${installedRoot}/assets/reject.example.json`, 'utf8')).toContain('"reject_reason"');
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
+    expect(readFileSync(installedInitConfigPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/init-config.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
+    expect(existsSync(`${home}/.codex/data/trends-radar`)).toBe(true);
+    expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
+    expect(existsSync(`${codexHome}/data/trends-radar/config.json`)).toBe(false);
 
     const prepared = await execa('node', [installedHelperPath, join(ROOT, 'tests/fixtures/round2-input.json')], {
       cwd: '/',
@@ -63,17 +77,25 @@ describe('install.sh', () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
     const codexHome = `${home}/custom-codex`;
     const opencliHome = `${home}/custom-opencli`;
-    const bin = setupFakeBin({ uname: 'Darwin', node: true, npm: true, opencli: true, chrome: true });
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true });
     const pluginPackage = `${opencliHome}/plugins/google-trends-rising/package.json`;
     const staleFile = `${opencliHome}/plugins/google-trends-rising/stale.txt`;
     const installedRoot = `${codexHome}/skills/trends-radar`;
     const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
+    const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
+    const existingConfig = {
+      default_geo: 'GB',
+      default_time: '30d',
+      default_min_rise: 5000,
+      default_output_format: 'csv',
+      custom_round2_limit: 25,
+    };
 
     await execa('bash', ['scripts/install.sh'], {
       cwd: ROOT,
       env: {
         HOME: home,
-        PATH: `${bin}:/usr/bin:/bin`,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
         GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
         CODEX_HOME: codexHome,
         OPENCLI_HOME: opencliHome,
@@ -82,12 +104,13 @@ describe('install.sh', () => {
 
     writeFileSync(pluginPackage, 'corrupted plugin package\n');
     writeFileSync(staleFile, 'stale runtime file\n');
+    writeFileSync(stableConfigPath, `${JSON.stringify(existingConfig, null, 2)}\n`);
 
     await execa('bash', [`${installedRoot}/scripts/install.sh`], {
       cwd: '/',
       env: {
         HOME: home,
-        PATH: `${bin}:/bin`,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
         GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
         CODEX_HOME: codexHome,
         OPENCLI_HOME: opencliHome,
@@ -101,6 +124,7 @@ describe('install.sh', () => {
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
+    expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(existingConfig);
 
     const prepared = await execa('node', [installedHelperPath, join(ROOT, 'tests/fixtures/round2-empty.json')], {
       cwd: '/',
