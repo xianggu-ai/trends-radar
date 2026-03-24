@@ -6,11 +6,11 @@
     },
     {
       "name": "doctor-apple-events-remediation",
-      "prompt": "Use google-trends-rising-collector on an already-installed machine where collection is failing because Google Chrome cannot run JavaScript from Apple Events. Guide the user through the next step without skipping past remediation."
+      "prompt": "Use trends-radar on an already-installed machine where collection is failing because Google Chrome cannot run JavaScript from Apple Events. Guide the user through the next step without skipping past remediation."
     },
     {
       "name": "collect-rising-queries",
-      "prompt": "Use google-trends-rising-collector to help me collect rising queries from several Google Trends compare tabs that I already prepared in Chrome."
+      "prompt": "Use trends-radar to help me collect rising queries from several Google Trends compare tabs that I already prepared in Chrome."
     },
     {
       "name": "generic-google-trends-request",

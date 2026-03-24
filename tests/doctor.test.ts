@@ -28,7 +28,7 @@ describe('doctor.sh', () => {
   it('runs from the installed skill bundle after install.sh copies doctor.sh into place', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
     const bin = setupFakeBin({ uname: 'Darwin', node: true, npm: true, opencli: true, chrome: true, osascript: true });
-    const installedDoctorPath = `${home}/.codex/skills/google-trends-rising-collector/scripts/doctor.sh`;
+    const installedDoctorPath = `${home}/.codex/skills/trends-radar/scripts/doctor.sh`;
 
     await execa('bash', ['scripts/install.sh'], {
       cwd: ROOT,

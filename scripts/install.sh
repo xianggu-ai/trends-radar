@@ -6,7 +6,7 @@ SCRIPT_DIR="${SCRIPT_PATH%/*}"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 OPENCLI_HOME="${OPENCLI_HOME:-$HOME/.opencli}"
-SKILL_DIR="$CODEX_HOME/skills/google-trends-rising-collector"
+SKILL_DIR="$CODEX_HOME/skills/trends-radar"
 PLUGIN_DIR="$OPENCLI_HOME/plugins/google-trends-rising"
 
 die() {
@@ -90,8 +90,8 @@ if [ ! -d "/Applications/Google Chrome.app" ] && ! command -v "Google Chrome" >/
   die "Google Chrome is required."
 fi
 
-if [ -f "$ROOT/skills/google-trends-rising-collector/SKILL.md" ]; then
-  SKILL_SOURCE_FILE="$ROOT/skills/google-trends-rising-collector/SKILL.md"
+if [ -f "$ROOT/skills/trends-radar/SKILL.md" ]; then
+  SKILL_SOURCE_FILE="$ROOT/skills/trends-radar/SKILL.md"
 elif [ -f "$ROOT/SKILL.md" ]; then
   SKILL_SOURCE_FILE="$ROOT/SKILL.md"
 else

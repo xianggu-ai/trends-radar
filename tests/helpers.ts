@@ -62,10 +62,10 @@ export function setupFakeBin(opts: Record<string, FakeBinMode>): string {
 export function seedInstalledLayout(): string {
   const home = mkdtempSync(join(tmpdir(), 'gt-home-'));
 
-  mkdirSync(join(home, '.codex/skills/google-trends-rising-collector/scripts'), { recursive: true });
+  mkdirSync(join(home, '.codex/skills/trends-radar/scripts'), { recursive: true });
   mkdirSync(join(home, '.opencli/plugins/google-trends-rising'), { recursive: true });
 
-  writeFileSync(join(home, '.codex/skills/google-trends-rising-collector/SKILL.md'), '# installed\n');
+  writeFileSync(join(home, '.codex/skills/trends-radar/SKILL.md'), '# installed\n');
   writeFileSync(join(home, '.opencli/plugins/google-trends-rising/package.json'), '{}\n');
 
   return home;

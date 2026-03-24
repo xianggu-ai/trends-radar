@@ -1,5 +1,5 @@
 {
-  "name": "google-trends-rising-collector",
+  "name": "trends-radar",
   "private": true,
   "type": "module",
   "scripts": {

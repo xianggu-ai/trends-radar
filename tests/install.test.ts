@@ -15,8 +15,8 @@ describe('install.sh', () => {
       env: { HOME: home, PATH: `${bin}:/usr/bin:/bin`, GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1' },
     });
 
-    expect(readFileSync(`${home}/.codex/skills/google-trends-rising-collector/SKILL.md`, 'utf8')).toContain('google-trends-rising-collector');
-    expect(readFileSync(`${home}/.codex/skills/google-trends-rising-collector/vendor/opencli-plugin-google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
+    expect(readFileSync(`${home}/.codex/skills/trends-radar/SKILL.md`, 'utf8')).toContain('trends-radar');
+    expect(readFileSync(`${home}/.codex/skills/trends-radar/vendor/opencli-plugin-google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(readFileSync(`${home}/.opencli/plugins/google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
   });
 
@@ -45,7 +45,7 @@ describe('install.sh', () => {
     writeFileSync(pluginPackage, 'corrupted plugin package\n');
     writeFileSync(staleFile, 'stale runtime file\n');
 
-    await execa('bash', [`${home}/.codex/skills/google-trends-rising-collector/scripts/install.sh`], {
+    await execa('bash', [`${home}/.codex/skills/trends-radar/scripts/install.sh`], {
       cwd: '/',
       env: { HOME: home, PATH: `${bin}:/bin`, GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1' },
     });

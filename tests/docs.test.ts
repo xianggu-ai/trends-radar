@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ROOT } from './helpers';
 
 const README_PATH = `${ROOT}/README.md`;
-const SKILL_PATH = `${ROOT}/skills/google-trends-rising-collector/SKILL.md`;
+const SKILL_PATH = `${ROOT}/skills/trends-radar/SKILL.md`;
 const EVALS_PATH = `${ROOT}/evals/evals.json`;
 
 type EvalEntry = {
@@ -34,7 +34,7 @@ describe('documentation contract', () => {
       'custom OpenCLI plugin',
       'same geo, time, category, and search property',
       'resolve any CAPTCHA or unusual-traffic interstitial manually',
-      'run ~/.codex/skills/google-trends-rising-collector/scripts/doctor.sh',
+      'run ~/.codex/skills/trends-radar/scripts/doctor.sh',
     ]);
   });
 
@@ -45,12 +45,12 @@ describe('documentation contract', () => {
     expect(skill).toContain('Do not auto-trigger from generic Google Trends requests.');
 
     expectContainsAll(skill, [
-      '使用 google-trends-rising-collector',
+      '使用 trends-radar',
       'install',
       'doctor',
       'collect',
-      '${CODEX_HOME:-$HOME/.codex}/skills/google-trends-rising-collector/scripts/doctor.sh',
-      '${CODEX_HOME:-$HOME/.codex}/skills/google-trends-rising-collector/scripts/install.sh',
+      '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh',
+      '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh',
       'If doctor fails, stop',
       'On a fresh machine, install happens from README.md plus scripts/install.sh',
       'If the plugin is missing or damaged on an already-installed machine',
@@ -84,7 +84,7 @@ describe('documentation contract', () => {
     const genericPrompt = byName.get('generic-google-trends-request');
     expect(genericPrompt).toBeDefined();
     expect(genericPrompt).toContain('Google Trends');
-    expect(genericPrompt).not.toContain('google-trends-rising-collector');
+    expect(genericPrompt).not.toContain('trends-radar');
     expect(genericPrompt?.toLowerCase()).not.toContain('trigger');
     expect(genericPrompt?.toLowerCase()).not.toContain('skill');
     expect(genericPrompt?.toLowerCase()).not.toContain('workflow');

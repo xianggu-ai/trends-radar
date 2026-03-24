@@ -1,4 +1,4 @@
-# google-trends-rising-collector
+# trends-radar
 
 This repo ships a custom OpenCLI plugin plus a Codex Skill for collecting Google Trends `Related queries > Rising` data from tabs that are already open in desktop Google Chrome on macOS. `opencli` is the host runtime, but `collect-open-trends-tabs` is provided by this repository's custom OpenCLI plugin, not by upstream OpenCLI.
 
@@ -20,15 +20,15 @@ Fresh-machine prerequisites before running the installer:
 Use this flow on a fresh machine that does not already have the installed Skill bundle:
 
 ```bash
-git clone https://github.com/xianggu-ai/google-trends-rising-collector.git
-cd google-trends-rising-collector
+git clone https://github.com/xianggu-ai/trends-radar.git
+cd trends-radar
 ./scripts/install.sh
 ```
 
 After install:
 
-- run ~/.codex/skills/google-trends-rising-collector/scripts/doctor.sh
-- invoke the installed Skill explicitly by name: `使用 google-trends-rising-collector`
+- run ~/.codex/skills/trends-radar/scripts/doctor.sh
+- invoke the installed Skill explicitly by name: `使用 trends-radar`
 
 ## Upgrade
 
@@ -39,7 +39,7 @@ git pull
 ./scripts/install.sh
 ```
 
-This refreshes the installed Skill bundle under `~/.codex/skills/google-trends-rising-collector/` and the runtime plugin under `~/.opencli/plugins/google-trends-rising/`.
+This refreshes the installed Skill bundle under `~/.codex/skills/trends-radar/` and the runtime plugin under `~/.opencli/plugins/google-trends-rising/`.
 
 ## Collection Prep
 
@@ -53,8 +53,8 @@ This refreshes the installed Skill bundle under `~/.codex/skills/google-trends-r
 
 ## Troubleshooting
 
-- Installed health check: run `~/.codex/skills/google-trends-rising-collector/scripts/doctor.sh` whenever the workflow looks unhealthy or before the first collection attempt on a machine.
-- Installed repair: run `~/.codex/skills/google-trends-rising-collector/scripts/install.sh` if the installed Skill or plugin is missing, stale, or damaged.
+- Installed health check: run `~/.codex/skills/trends-radar/scripts/doctor.sh` whenever the workflow looks unhealthy or before the first collection attempt on a machine.
+- Installed repair: run `~/.codex/skills/trends-radar/scripts/install.sh` if the installed Skill or plugin is missing, stale, or damaged.
 - If doctor reports an Apple Events failure, enable Chrome's `Allow JavaScript from Apple Events` setting and rerun doctor.
 - If collection fails after doctor passes, re-check browser prep: same geo, time, category, and search property, valid Google Trends compare pages, and any manual CAPTCHA clearance.
 - If extraction still fails on a correctly prepared page, treat that as a collector limitation and update the vendored plugin before relying on the result.

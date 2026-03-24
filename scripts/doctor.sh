@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
-SKILL_DIR="$CODEX_HOME/skills/google-trends-rising-collector"
+SKILL_DIR="$CODEX_HOME/skills/trends-radar"
 PLUGIN_DIR="${OPENCLI_HOME:-$HOME/.opencli}/plugins/google-trends-rising"
 CHROME_APP_PATH="${DOCTOR_CHROME_APP_PATH:-/Applications/Google Chrome.app}"
 
