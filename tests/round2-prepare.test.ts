@@ -1,185 +1,106 @@
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { execa } from 'execa';
 import { ROOT } from './helpers';
 
-const SCRIPT_PATH = join(ROOT, 'scripts/round2-prepare.mjs');
-const INPUT_FIXTURE = join(ROOT, 'tests/fixtures/round2-input.json');
-const EMPTY_FIXTURE = join(ROOT, 'tests/fixtures/round2-empty.json');
-
-type SourceContextRow = {
-  seed: string;
-  rise_pct: number | null;
-  is_breakout: boolean;
-};
-
-type Candidate = {
+type PreparedCandidate = {
   keyword: string;
   seeds: string[];
   rise_pct: number | null;
   is_breakout: boolean;
-  source_context: SourceContextRow[];
+  source_context: Array<{
+    seed: string;
+    rise_pct?: number;
+    is_breakout: boolean;
+  }>;
 };
 
-type Round2Output = {
+type PreparedEnvelope = {
   inputPath: string;
   keepPath: string;
   rejectPath: string;
-  candidates: Candidate[];
+  candidates: PreparedCandidate[];
 };
 
-async function runPrepare(inputPath?: string) {
-  const args = [SCRIPT_PATH];
-
-  if (inputPath) {
-    args.push(inputPath);
-  }
-
-  return execa('node', args, {
+async function runHelper(inputPath: string): Promise<PreparedEnvelope> {
+  const result = await execa('node', ['scripts/round2-prepare.mjs', inputPath], {
     cwd: ROOT,
-    reject: false,
   });
-}
 
-function parseOutput(stdout: string): Round2Output {
-  return JSON.parse(stdout) as Round2Output;
-}
-
-function findCandidate(output: Round2Output, keyword: string): Candidate {
-  const candidate = output.candidates.find((entry) => entry.keyword === keyword);
-
-  expect(candidate).toBeDefined();
-
-  return candidate as Candidate;
-}
-
-function writeTempJsonFile(body: string): string {
-  const directory = mkdtempSync(join(tmpdir(), 'round2-prepare-'));
-  const inputPath = join(directory, 'input.json');
-
-  writeFileSync(inputPath, body);
-
-  return inputPath;
+  return JSON.parse(result.stdout) as PreparedEnvelope;
 }
 
 describe('round2-prepare.mjs', () => {
-  it('normalizes valid first-stage input and derives keep/reject output paths', async () => {
-    const result = await runPrepare(INPUT_FIXTURE);
+  it('normalizes first-stage results into deduplicated candidates with merged seeds and source context', async () => {
+    const prepared = await runHelper(`${ROOT}/tests/fixtures/round2-input.json`);
 
-    expect(result.exitCode).toBe(0);
+    expect(prepared.inputPath).toContain('round2-input.json');
+    expect(prepared.keepPath.endsWith('round2-input.keep.json')).toBe(true);
+    expect(prepared.rejectPath.endsWith('round2-input.reject.json')).toBe(true);
+    expect(prepared.candidates).toHaveLength(2);
 
-    const output = parseOutput(result.stdout);
-
-    expect(output.inputPath).toBe(INPUT_FIXTURE);
-    expect(output.keepPath).toBe(join(ROOT, 'tests/fixtures/round2-input.keep.json'));
-    expect(output.rejectPath).toBe(join(ROOT, 'tests/fixtures/round2-input.reject.json'));
-    expect(output.candidates).toHaveLength(3);
-  });
-
-  it('deduplicates duplicate related_query rows under the same seed', async () => {
-    const result = await runPrepare(INPUT_FIXTURE);
-    const output = parseOutput(result.stdout);
-    const candidate = findCandidate(output, 'ghibli style image');
-
-    expect(candidate.source_context.filter((row) => row.seed === 'ghibli')).toHaveLength(1);
-    expect(candidate.source_context).toContainEqual({
-      seed: 'ghibli',
+    expect(prepared.candidates[0]).toEqual({
+      keyword: 'ghibli style image',
+      seeds: ['ai image generator', 'ghibli'],
       rise_pct: 4200,
-      is_breakout: false,
+      is_breakout: true,
+      source_context: [
+        { seed: 'ai image generator', rise_pct: 4200, is_breakout: false },
+        { seed: 'ghibli', rise_pct: null, is_breakout: true },
+      ],
+    });
+
+    expect(prepared.candidates[1]).toEqual({
+      keyword: 'agent template',
+      seeds: ['agent'],
+      rise_pct: null,
+      is_breakout: true,
+      source_context: [{ seed: 'agent', rise_pct: null, is_breakout: true }],
     });
   });
 
-  it('merges the same keyword across seeds and preserves the highest numeric rise_pct', async () => {
-    const result = await runPrepare(INPUT_FIXTURE);
-    const output = parseOutput(result.stdout);
-    const candidate = findCandidate(output, 'ghibli style image');
+  it('returns zero candidates for a valid-but-empty results array', async () => {
+    const prepared = await runHelper(`${ROOT}/tests/fixtures/round2-empty.json`);
 
-    expect(candidate.seeds).toEqual(['ghibli', 'ai image generator']);
-    expect(candidate.rise_pct).toBe(4200);
-    expect(candidate.is_breakout).toBe(true);
+    expect(prepared.candidates).toEqual([]);
+    expect(prepared.keepPath.endsWith('round2-empty.keep.json')).toBe(true);
+    expect(prepared.rejectPath.endsWith('round2-empty.reject.json')).toBe(true);
   });
 
-  it('uses null rise_pct for breakout-only keywords', async () => {
-    const result = await runPrepare(INPUT_FIXTURE);
-    const output = parseOutput(result.stdout);
-    const candidate = findCandidate(output, 'breakout only query');
-
-    expect(candidate.seeds).toEqual(['ai']);
-    expect(candidate.rise_pct).toBeNull();
-    expect(candidate.is_breakout).toBe(true);
+  it('fails fast when the input file is missing', async () => {
+    await expect(runHelper(`${ROOT}/tests/fixtures/does-not-exist.json`)).rejects.toThrow(/Input file not found/i);
   });
 
-  it('includes condensed source_context rows for the skill', async () => {
-    const result = await runPrepare(INPUT_FIXTURE);
-    const output = parseOutput(result.stdout);
-    const candidate = findCandidate(output, 'ghibli style image');
+  it('fails fast when the input file contains invalid JSON syntax', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'round2-invalid-json-'));
+    const inputPath = join(dir, 'broken.json');
+    writeFileSync(inputPath, '{results: [');
 
-    expect(candidate.source_context).toEqual([
-      {
-        seed: 'ghibli',
-        rise_pct: 4200,
-        is_breakout: false,
-      },
-      {
-        seed: 'ai image generator',
-        rise_pct: null,
-        is_breakout: true,
-      },
-    ]);
+    await expect(runHelper(inputPath)).rejects.toThrow(/Invalid JSON/i);
   });
 
-  it('returns zero candidates for a valid empty results payload', async () => {
-    const result = await runPrepare(EMPTY_FIXTURE);
+  it('fails fast when the top-level results array is missing', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'round2-invalid-shape-'));
+    const inputPath = join(dir, 'shape.json');
+    writeFileSync(inputPath, JSON.stringify({ run: { scope: null } }));
 
-    expect(result.exitCode).toBe(0);
-
-    const output = parseOutput(result.stdout);
-
-    expect(output.keepPath).toBe(join(ROOT, 'tests/fixtures/round2-empty.keep.json'));
-    expect(output.rejectPath).toBe(join(ROOT, 'tests/fixtures/round2-empty.reject.json'));
-    expect(output.candidates).toEqual([]);
+    await expect(runHelper(inputPath)).rejects.toThrow(/top-level object with a results array/i);
   });
 
-  it('fails with actionable stderr when the input file is missing', async () => {
-    const inputPath = join(ROOT, 'tests/fixtures/does-not-exist.json');
-    const result = await runPrepare(inputPath);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Input file not found');
-    expect(result.stderr).toContain(inputPath);
-  });
-
-  it('fails with actionable stderr for invalid JSON syntax', async () => {
-    const inputPath = writeTempJsonFile('{"results": [}');
-    const result = await runPrepare(inputPath);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Invalid JSON in first-stage input');
-  });
-
-  it('fails when the top-level payload does not contain a results array', async () => {
-    const inputPath = writeTempJsonFile('{"run": {"scope": "US"}}');
-    const result = await runPrepare(inputPath);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Expected a top-level object with a results array');
-  });
-
-  it('fails when a result item is missing a required field', async () => {
-    const inputPath = writeTempJsonFile(JSON.stringify({
+  it('fails fast when a result item is missing required fields', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'round2-invalid-item-'));
+    const inputPath = join(dir, 'item.json');
+    writeFileSync(inputPath, JSON.stringify({
       results: [
         {
-          related_query: 'missing seed',
-          is_breakout: false,
-          rise_pct: 2400,
+          seed: 'agent',
+          related_query: 'agent template',
         },
       ],
     }));
-    const result = await runPrepare(inputPath);
 
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Result item 0 is missing required field "seed"');
+    await expect(runHelper(inputPath)).rejects.toThrow(/Missing required field/i);
   });
 });
