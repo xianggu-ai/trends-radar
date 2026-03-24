@@ -32,11 +32,35 @@ function expectContainsAll(body: string, snippets: string[]): void {
   }
 }
 
+function expectAnyLineContainingAll(body: string, snippets: string[]): void {
+  const lines = body.split('\n').map((line) => line.trim());
+
+  expect(
+    lines.some((line) => snippets.every((snippet) => line.includes(snippet))),
+  ).toBe(true);
+}
+
 function expectOmitsAll(body: string, snippets: string[]): void {
   for (const snippet of snippets) {
     expect(body).not.toContain(snippet);
   }
 }
+
+const DEFAULT_CONFIG = {
+  default_geo: 'US',
+  default_time: '7d',
+  default_min_rise: 2000,
+  default_output_format: 'json',
+};
+
+const ALLOWED_SITE_TYPES = ['tool', 'game', 'content', 'mixed'];
+const ALLOWED_REJECT_REASONS = [
+  'short_term_event',
+  'noise',
+  'not_siteable',
+  'too_broad',
+  'navigational',
+];
 
 describe('documentation contract', () => {
   it('keeps README bootstrap guidance aligned with the resource-layered packaged workflow', () => {
@@ -61,6 +85,9 @@ describe('documentation contract', () => {
       'trends-radar',
       'skills/trends-radar/references/',
       'skills/trends-radar/assets/',
+      'references/gotchas.md',
+      'references/runbook.md',
+      'assets/config.example.json',
       '~/.codex/data/trends-radar/',
       'append-only `usage.jsonl`',
       'runtime memory survives upgrades',
@@ -74,6 +101,8 @@ describe('documentation contract', () => {
       '~/.codex/skills/trends-radar/',
       '~/.opencli/plugins/google-trends-rising/',
     ]);
+
+    expectAnyLineContainingAll(readme, ['usage.jsonl', 'install', 'doctor']);
   });
 
   it('keeps the plugin README aligned with configurable OpenCLI plugin paths', () => {
@@ -115,12 +144,16 @@ describe('documentation contract', () => {
       'assets/config.example.json',
       'assets/keep.example.json',
       'assets/reject.example.json',
+      '~/.codex/data/trends-radar/',
+      'config.json',
+      'usage.jsonl',
     ]);
 
     expect(skill).not.toContain('Keep output fields:');
     expect(skill).not.toContain('Reject output fields:');
     expect(skill).not.toContain('Allowed `site_type` values:');
     expect(skill).not.toContain('Allowed `reject_reason` values:');
+    expectAnyLineContainingAll(skill, ['usage.jsonl', 'install', 'doctor']);
   });
 
   it('ships focused reference docs for install, collect, round2, gotchas, and runbook guidance', () => {
@@ -138,6 +171,7 @@ describe('documentation contract', () => {
       'Expected installed locations',
       '${CODEX_HOME:-$HOME/.codex}',
       '${OPENCLI_HOME:-$HOME/.opencli}',
+      '~/.codex/data/trends-radar/',
     ]);
     expectOmitsAll(installReference, [
       '~/.codex/skills/trends-radar/',
@@ -235,16 +269,9 @@ describe('documentation contract', () => {
     expect(rejectExample.reject_reason.length).toBeGreaterThan(0);
     expect(rejectExample.why.length).toBeGreaterThan(0);
 
-    expect(Object.keys(configExample).sort()).toEqual([
-      'default_geo',
-      'default_min_rise',
-      'default_output_format',
-      'default_time',
-    ].sort());
-    expect(configExample.default_geo.length).toBeGreaterThan(0);
-    expect(configExample.default_time.length).toBeGreaterThan(0);
-    expect(configExample.default_min_rise).toBeGreaterThan(0);
-    expect(configExample.default_output_format.length).toBeGreaterThan(0);
+    expect(configExample).toEqual(DEFAULT_CONFIG);
+    expect(ALLOWED_SITE_TYPES).toContain(keepExample.site_type);
+    expect(ALLOWED_REJECT_REASONS).toContain(rejectExample.reject_reason);
   });
 
   it('ships parseable eval prompts covering bootstrap, doctor, collect, and non-trigger scenarios', () => {
@@ -253,7 +280,8 @@ describe('documentation contract', () => {
     const parsed = JSON.parse(readFileSync(EVALS_PATH, 'utf8')) as EvalFile;
 
     expect(Array.isArray(parsed.evals)).toBe(true);
-    expect(parsed.evals.length).toBeGreaterThanOrEqual(6);
+    expect(parsed.evals.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(parsed.evals.map((entry) => entry.name)).size).toBe(parsed.evals.length);
 
     for (const entry of parsed.evals) {
       expect(typeof entry.name).toBe('string');
@@ -268,6 +296,10 @@ describe('documentation contract', () => {
     expect(byName.get('doctor-apple-events-remediation')).toContain('JavaScript from Apple Events');
     expect(byName.get('collect-rising-queries')).toContain('collect rising queries');
     expect(byName.get('round2-filter-file')).toContain('二轮筛选');
+    expect(byName.get('stable-runtime-data-contract')).toContain('usage.jsonl');
+    expect(byName.get('stable-runtime-data-contract')).toContain('config.example.json');
+    expect(byName.get('collect-manual-remediation')).toContain('CAPTCHA');
+    expect(byName.get('collect-manual-remediation')).toContain('same geo, time, category, and search property');
     expect(byName.get('generic-keyword-filtering-request')).toContain('filter');
 
     const genericPrompt = byName.get('generic-google-trends-request');

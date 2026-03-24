@@ -17,6 +17,14 @@
       "prompt": "使用 trends-radar 做二轮筛选，输入文件是 /tmp/round1.json。请把短期热点和不适合做站的词筛掉。"
     },
     {
+      "name": "stable-runtime-data-contract",
+      "prompt": "Use trends-radar to explain where the durable config and append-only usage.jsonl log live, which files survive upgrades, and where I can find the packaged config.example.json shape reference."
+    },
+    {
+      "name": "collect-manual-remediation",
+      "prompt": "Use trends-radar on an already-installed machine where doctor passes, but one prepared compare tab is no longer on the same geo, time, category, and search property and another is blocked by a CAPTCHA. Guide the next step without pretending the collector can bypass either issue."
+    },
+    {
       "name": "generic-google-trends-request",
       "prompt": "Can you give me a quick summary of what is trending on Google Trends today in the United States?"
     },

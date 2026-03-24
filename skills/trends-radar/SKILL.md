@@ -42,6 +42,12 @@ Read `references/runbook.md` to map symptoms to the next remediation step.
 Use `assets/config.example.json` as the config shape reference.
 Use `assets/keep.example.json` and `assets/reject.example.json` as round-2 output examples.
 
+## Stable Runtime Data
+
+- Durable runtime data lives under `~/.codex/data/trends-radar/`.
+- Use the durable `config.json` plus `assets/config.example.json` to keep setup aligned with the installed workflow.
+- The installed `install` and `doctor` scripts append status records to `usage.jsonl`.
+
 ## install
 
 - Fresh-machine bootstrap stays in README.md plus `./scripts/install.sh`.

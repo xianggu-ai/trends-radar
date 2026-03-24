@@ -1,9 +1,15 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { ROOT } from './helpers';
 import { describe, expect, it } from 'vitest';
 
 describe('repo layout', () => {
-  it('contains the vendored plugin, required top-level artifacts, and skill resource layers', () => {
+  it('contains the vendored plugin, required top-level artifacts, and exactly one public skill resource bundle', () => {
+    const publicSkills = readdirSync(`${ROOT}/skills`, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+
+    expect(publicSkills).toEqual(['trends-radar']);
     expect(existsSync(`${ROOT}/VERSION`)).toBe(true);
     expect(existsSync(`${ROOT}/package.json`)).toBe(true);
     expect(existsSync(`${ROOT}/scripts/round2-prepare.mjs`)).toBe(true);
