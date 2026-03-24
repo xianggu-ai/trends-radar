@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -20,6 +20,8 @@ describe('install.sh', () => {
     expect(readFileSync(`${home}/.codex/skills/trends-radar/vendor/opencli-plugin-google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(readFileSync(`${home}/.opencli/plugins/google-trends-rising/package.json`, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
+    expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
+    expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
 
     const prepared = await execa('node', [installedHelperPath, join(ROOT, 'tests/fixtures/round2-input.json')], {
       cwd: '/',
@@ -63,6 +65,8 @@ describe('install.sh', () => {
     expect(readFileSync(pluginPackage, 'utf8')).toContain('opencli-plugin-google-trends-rising');
     expect(existsSync(staleFile)).toBe(false);
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
+    expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
+    expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
 
     const prepared = await execa('node', [installedHelperPath, join(ROOT, 'tests/fixtures/round2-empty.json')], {
       cwd: '/',
