@@ -55,4 +55,24 @@ describe('init-config.mjs', () => {
     expect(rerun.stdout.trim()).toBe(configPath);
     expect(JSON.parse(readFileSync(configPath, 'utf8'))).toEqual(existingConfig);
   });
+
+  it('replaces an unreadable config with the default payload', async () => {
+    const home = mkdtempSync(join(tmpdir(), 'gt-config-'));
+    const configPath = `${home}/.codex/data/trends-radar/config.json`;
+
+    await execa('node', ['scripts/init-config.mjs'], {
+      cwd: ROOT,
+      env: { HOME: home },
+    });
+
+    writeFileSync(configPath, '{not json}\n');
+
+    const repaired = await execa('node', ['scripts/init-config.mjs'], {
+      cwd: ROOT,
+      env: { HOME: home },
+    });
+
+    expect(repaired.stdout.trim()).toBe(configPath);
+    expect(JSON.parse(readFileSync(configPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
+  });
 });

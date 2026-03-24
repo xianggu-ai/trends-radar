@@ -133,4 +133,39 @@ describe('install.sh', () => {
     expect(prepared.stdout).toContain('"rejectPath"');
     expect(prepared.stdout).toContain('"candidates": []');
   });
+
+  it('repairs an unreadable stable config when rerunning the installed installer', async () => {
+    const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
+    const codexHome = `${home}/custom-codex`;
+    const opencliHome = `${home}/custom-opencli`;
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true });
+    const installedRoot = `${codexHome}/skills/trends-radar`;
+    const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
+
+    await execa('bash', ['scripts/install.sh'], {
+      cwd: ROOT,
+      env: {
+        HOME: home,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
+    });
+
+    writeFileSync(stableConfigPath, '{not json}\n');
+
+    await execa('bash', [`${installedRoot}/scripts/install.sh`], {
+      cwd: '/',
+      env: {
+        HOME: home,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
+    });
+
+    expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
+  });
 });

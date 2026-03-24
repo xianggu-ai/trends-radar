@@ -26,9 +26,7 @@ if (!existsSync(CONFIG_PATH)) {
 try {
   JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 } catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`Existing config is unreadable at ${CONFIG_PATH}: ${message}`);
-  process.exit(1);
+  writeFileSync(CONFIG_PATH, `${JSON.stringify(DEFAULT_CONFIG, null, 2)}\n`);
 }
 
 console.log(CONFIG_PATH);
