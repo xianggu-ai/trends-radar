@@ -123,7 +123,7 @@ copy_if_needed "$VERSION_SOURCE_FILE" "$SKILL_DIR/VERSION"
 copy_if_needed "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh"
 copy_if_needed "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh"
 copy_if_needed "$ROUND2_HELPER_SOURCE_FILE" "$SKILL_DIR/scripts/round2-prepare.mjs"
-chmod +x "$INSTALL_SOURCE_FILE" "$SKILL_DIR/scripts/install.sh" "$DOCTOR_SOURCE_FILE" "$SKILL_DIR/scripts/doctor.sh" "$ROUND2_HELPER_SOURCE_FILE" "$SKILL_DIR/scripts/round2-prepare.mjs"
+chmod +x "$SKILL_DIR/scripts/install.sh" "$SKILL_DIR/scripts/doctor.sh" "$SKILL_DIR/scripts/round2-prepare.mjs"
 
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$SKILL_DIR/vendor/opencli-plugin-google-trends-rising"
 sync_dir_if_needed "$PLUGIN_SOURCE_DIR" "$PLUGIN_DIR"
