@@ -153,7 +153,7 @@ if [ "${GOOGLE_TRENDS_SKIP_PLUGIN_BUILD:-0}" != "1" ]; then
   )
 fi
 
-node "$SKILL_DIR/scripts/log-usage.mjs" install ok >/dev/null
+node "$SKILL_DIR/scripts/log-usage.mjs" install ok >/dev/null 2>&1 || true
 
 printf 'Installed skill path: %s\n' "$SKILL_DIR"
 printf 'Installed plugin path: %s\n' "$PLUGIN_DIR"

@@ -83,6 +83,15 @@ describe('doctor.sh', () => {
       { HOME: home, PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin` },
       `Stable data directory is missing at ${home}/.codex/data/trends-radar. Run ${home}/.codex/skills/trends-radar/scripts/install.sh to initialize it.`,
     );
+
+    expect(readUsageLog(home)).toEqual([
+      {
+        timestamp: expect.any(String),
+        action: 'doctor',
+        status: 'error',
+        reason: 'data_dir_missing',
+      },
+    ]);
   });
 
   it('fails with install guidance when the stable config is malformed JSON', async () => {

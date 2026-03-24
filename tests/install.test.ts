@@ -99,6 +99,50 @@ describe('install.sh', () => {
     })).rejects.toThrow(/macOS/i);
   });
 
+  it('keeps install repair successful when usage logging cannot append', async () => {
+    const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
+    const codexHome = `${home}/custom-codex`;
+    const opencliHome = `${home}/custom-opencli`;
+    const bin = setupFakeBin({ uname: 'Darwin', npm: true, opencli: true, chrome: true });
+    const installedRoot = `${codexHome}/skills/trends-radar`;
+    const usageLogPath = `${home}/.codex/data/trends-radar/usage.jsonl`;
+
+    await execa('bash', ['scripts/install.sh'], {
+      cwd: ROOT,
+      env: {
+        HOME: home,
+        PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
+        GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+        CODEX_HOME: codexHome,
+        OPENCLI_HOME: opencliHome,
+      },
+    });
+
+    chmodSync(usageLogPath, 0o000);
+
+    try {
+      const result = await execa('bash', [`${installedRoot}/scripts/install.sh`], {
+        cwd: '/',
+        env: {
+          HOME: home,
+          PATH: `${bin}:${REAL_NODE_DIR}:/usr/bin:/bin`,
+          GOOGLE_TRENDS_SKIP_PLUGIN_BUILD: '1',
+          CODEX_HOME: codexHome,
+          OPENCLI_HOME: opencliHome,
+        },
+      });
+
+      expect(result.stdout).toContain(`Installed skill path: ${installedRoot}`);
+      expect(result.stdout).toContain('Next step: run the doctor workflow before collecting.');
+    } finally {
+      chmodSync(usageLogPath, 0o600);
+    }
+
+    expect(readUsageLog(home).map(({ action, status }) => ({ action, status }))).toEqual([
+      { action: 'install', status: 'ok' },
+    ]);
+  });
+
   it('preserves the installed helper when repairing from the installed skill bundle after the source checkout is unavailable', async () => {
     const home = mkdtempSync(join(tmpdir(), 'gt-install-'));
     const codexHome = `${home}/custom-codex`;

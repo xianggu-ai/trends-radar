@@ -18,10 +18,6 @@ log_usage() {
 
   [ -f "$LOG_USAGE_SCRIPT" ] || return 0
 
-  if [ "$status" != "ok" ] && [ ! -d "$DATA_DIR" ]; then
-    return 0
-  fi
-
   if [ -n "$reason" ]; then
     node "$LOG_USAGE_SCRIPT" doctor "$status" --reason "$reason" >/dev/null 2>&1 || true
     return
