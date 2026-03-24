@@ -61,6 +61,7 @@ Trigger examples:
 - Ask only for the first-stage JSON path if it is missing.
 - Run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
 - Use the helper output to get the normalized candidates plus output paths.
+- Use each candidate's `source_context` as the first-stage context input for round-2 judgment.
 - If the helper returns no candidates, write `[]` to both output files and tell the user no candidates were available for round 2.
 - Write bare-array JSON outputs to the helper-provided `keepPath` and `rejectPath`.
 - Keep output fields:

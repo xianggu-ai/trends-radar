@@ -57,6 +57,14 @@ Round 2 is a Codex Skill step, not an OpenCLI command.
 
 Use it after round 1 has already produced a JSON file:
 
+Start from the round 1 collector command:
+
+```bash
+opencli google collect-open-trends-tabs --min-rise 2000 -f json
+```
+
+Then run round 2 through the Skill:
+
 ```text
 使用 trends-radar 做二轮筛选，输入文件是 /path/to/round1.json
 ```
