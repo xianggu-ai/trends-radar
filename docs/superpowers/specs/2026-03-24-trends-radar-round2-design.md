@@ -50,15 +50,40 @@ If the user does not provide a file path, the Skill should ask only for the firs
 
 Round 2 reads the first-stage collector JSON and consumes only the data needed for filtering:
 
-- `results`
+- top-level object containing `results`
 - optional run scope context when useful for prompts or summaries
 
-Each candidate should at minimum carry forward:
+Expected top-level input shape:
+
+```json
+{
+  "results": []
+}
+```
+
+Expected minimum item shape inside `results`:
+
+```json
+{
+  "seed": "string",
+  "related_query": "string",
+  "is_breakout": true,
+  "rise_pct": null
+}
+```
+
+Required fields per input item:
 
 - `seed`
 - `related_query` as the keyword under review
-- `rise_pct` when present
-- `is_breakout` when present
+- `is_breakout`
+
+Optional fields per input item:
+
+- `rise_pct`
+- any other first-stage metadata fields
+
+If `is_breakout` is `true`, `rise_pct` may be absent or null.
 
 Round 2 should deduplicate identical candidate keywords within the same input file before review.
 If the same `keyword` appears under multiple seeds, round 2 should merge them into one review item and preserve all originating seeds as a `seeds` array in the final output.
@@ -75,6 +100,8 @@ The exact stem should be derived from the input filename. For example, `/tmp/rou
 - `/tmp/round1.keep.json`
 - `/tmp/round1.reject.json`
 
+Both output files must be bare JSON arrays. V1 should not wrap them in a metadata object.
+
 ### Keep Output
 
 Each kept item should contain only:
@@ -87,6 +114,7 @@ Each kept item should contain only:
 - `evidence`
 
 `evidence` must be an array of 2 to 4 short strings, not a freeform paragraph and not a structured object.
+`rise_pct` must be either a number or `null`. If the source keyword is breakout-only and has no numeric percentage, write `null`.
 
 Allowed `site_type` values:
 
@@ -133,7 +161,8 @@ Round 2 should behave as a simple 3-step workflow.
 - map each result into a candidate keyword review record
 - deduplicate exact keyword repeats within the same input
 - merge repeated keywords across different seeds into one item with `seeds[]`
-- preserve the highest available `rise_pct` for the merged keyword row
+- preserve the highest available numeric `rise_pct` for the merged keyword row
+- if no numeric `rise_pct` exists for a merged keyword and at least one source row is breakout-only, output `rise_pct: null`
 
 ### Step 2: Codex Review
 
@@ -141,7 +170,8 @@ For each candidate keyword, Codex should answer only these questions:
 
 1. Is this primarily a short-term event term?
 2. Is this primarily noise, navigational, or too broad to turn into a standalone site?
-3. If kept, is it best suited to `tool`, `game`, `content`, or `mixed`?
+3. Is the keyword real but still not siteable as a standalone project?
+4. If kept, is it best suited to `tool`, `game`, `content`, or `mixed`?
 
 The review should prefer short, actionable reasoning over essay-style analysis.
 
@@ -169,6 +199,7 @@ V1 should include lightweight live context. That live context must stay narrow a
 - obvious signs that the term maps to a tool, game, or content intent
 
 V1 should not turn live context collection into a large new subsystem or a second crawler.
+V1 should cap live context gathering to a small fixed budget per keyword, such as at most three lightweight evidence items. If live context is unavailable, round 2 should still complete using first-stage context only and include one short evidence note stating that live context was unavailable.
 
 ## Example Shapes
 
