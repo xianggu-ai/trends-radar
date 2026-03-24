@@ -23,6 +23,7 @@
 
 Add `tests/round2-prepare.test.ts` covering:
 - valid first-stage input with one result item
+- duplicate `related_query` rows under the same seed are deduplicated
 - duplicate keyword merge across different seeds into `seeds[]`
 - preserve highest numeric `rise_pct`
 - breakout-only rows become `rise_pct: null`
@@ -206,7 +207,7 @@ Required round-2 behavior in the Skill:
 - run the installed helper path, not a repo-relative path
 - review each normalized candidate
 - use lightweight live context with a hard cap of three evidence items per keyword
-- if live context is unavailable, continue with first-stage context only and mention that in reasoning
+- if live context is unavailable, continue with first-stage context only and include one short fallback note inside the kept row's `evidence` array
 - use `source_context` from the helper as the first-stage context input for each keyword
 - if `candidates` is empty, write `[]` to both output files and tell the user no candidates were available for round 2
 - write bare-array JSON outputs to the helper-provided `keepPath` and `rejectPath`
@@ -273,7 +274,18 @@ node scripts/round2-prepare.mjs tests/fixtures/round2-input.json
 Expected:
 - JSON printed to stdout with `inputPath`, `keepPath`, `rejectPath`, and `candidates`
 
-- [ ] **Step 2: Verify empty-results handling**
+- [ ] **Step 2: Refresh the installed Skill bundle before manual verification**
+
+Run:
+
+```bash
+./scripts/install.sh
+```
+
+Expected:
+- installed Skill bundle under `~/.codex/skills/trends-radar/` contains the new Skill text and `scripts/round2-prepare.mjs`
+
+- [ ] **Step 3: Verify empty-results handling**
 
 Run:
 
@@ -285,25 +297,32 @@ Expected:
 - JSON printed to stdout with empty `candidates`
 - no error exit
 
-- [ ] **Step 3: Run one fixture-driven round-2 Skill pass**
+- [ ] **Step 4: Run one fixture-driven round-2 Skill pass**
+
+Prepare a temp copy outside the repo so generated files do not dirty git:
+
+```bash
+mkdir -p /tmp/trends-radar-round2
+cp tests/fixtures/round2-input.json /tmp/trends-radar-round2/round2-input.json
+```
 
 In a fresh Codex turn, invoke:
 
 ```text
-使用 trends-radar 做二轮筛选，输入文件是 /absolute/path/to/tests/fixtures/round2-input.json
+使用 trends-radar 做二轮筛选，输入文件是 /tmp/trends-radar-round2/round2-input.json
 ```
 
 Expected:
 - the Skill runs the installed helper path
-- `tests/fixtures/round2-input.keep.json` is created
-- `tests/fixtures/round2-input.reject.json` is created
+- `/tmp/trends-radar-round2/round2-input.keep.json` is created
+- `/tmp/trends-radar-round2/round2-input.reject.json` is created
 
-- [ ] **Step 4: Inspect generated round-2 outputs**
+- [ ] **Step 5: Inspect generated round-2 outputs**
 
 Run:
 
 ```bash
-node -e "const fs=require('fs'); for (const file of ['tests/fixtures/round2-input.keep.json','tests/fixtures/round2-input.reject.json']) { const data=JSON.parse(fs.readFileSync(file,'utf8')); if (!Array.isArray(data)) throw new Error(file + ' is not an array'); console.log(file, data.length); }"
+node -e "const fs=require('fs'); for (const file of ['/tmp/trends-radar-round2/round2-input.keep.json','/tmp/trends-radar-round2/round2-input.reject.json']) { const data=JSON.parse(fs.readFileSync(file,'utf8')); if (!Array.isArray(data)) throw new Error(file + ' is not an array'); console.log(file, data.length); }"
 ```
 
 Expected:
@@ -312,13 +331,50 @@ Expected:
 Then spot-check field shape:
 
 ```bash
-node -e "const fs=require('fs'); const keep=JSON.parse(fs.readFileSync('tests/fixtures/round2-input.keep.json','utf8')); const reject=JSON.parse(fs.readFileSync('tests/fixtures/round2-input.reject.json','utf8')); for (const row of keep) { const keys=Object.keys(row).sort().join(','); if (keys !== ['evidence','keyword','rise_pct','seeds','site_type','why'].sort().join(',')) throw new Error('bad keep keys: ' + keys); if (!['tool','game','content','mixed'].includes(row.site_type)) throw new Error('bad site_type'); if (!Array.isArray(row.evidence) || row.evidence.length < 2 || row.evidence.length > 4) throw new Error('bad evidence'); } for (const row of reject) { const keys=Object.keys(row).sort().join(','); if (keys !== ['keyword','reject_reason','seeds','why'].sort().join(',')) throw new Error('bad reject keys: ' + keys); if (!['short_term_event','noise','not_siteable','too_broad','navigational'].includes(row.reject_reason)) throw new Error('bad reject_reason'); } console.log('round2 output contract OK');"
+node -e "const fs=require('fs'); const keep=JSON.parse(fs.readFileSync('/tmp/trends-radar-round2/round2-input.keep.json','utf8')); const reject=JSON.parse(fs.readFileSync('/tmp/trends-radar-round2/round2-input.reject.json','utf8')); for (const row of keep) { const keys=Object.keys(row).sort().join(','); if (keys !== ['evidence','keyword','rise_pct','seeds','site_type','why'].sort().join(',')) throw new Error('bad keep keys: ' + keys); if (!['tool','game','content','mixed'].includes(row.site_type)) throw new Error('bad site_type'); if (!Array.isArray(row.evidence) || row.evidence.length < 2 || row.evidence.length > 4) throw new Error('bad evidence'); } for (const row of reject) { const keys=Object.keys(row).sort().join(','); if (keys !== ['keyword','reject_reason','seeds','why'].sort().join(',')) throw new Error('bad reject keys: ' + keys); if (!['short_term_event','noise','not_siteable','too_broad','navigational'].includes(row.reject_reason)) throw new Error('bad reject_reason'); } console.log('round2 output contract OK');"
 ```
 
 Expected:
 - output contract check passes
 
-- [ ] **Step 5: Run the full root test suite**
+- [ ] **Step 6: Verify the no-live-context fallback shape**
+
+In a fresh Codex turn, invoke a second run that explicitly skips live lookups:
+
+```text
+使用 trends-radar 做二轮筛选，输入文件是 /tmp/trends-radar-round2/round2-input.json。这次不要获取 live context，只用一轮上下文继续，并按 fallback 规则输出。
+```
+
+Then inspect the kept output:
+
+```bash
+node -e "const fs=require('fs'); const keep=JSON.parse(fs.readFileSync('/tmp/trends-radar-round2/round2-input.keep.json','utf8')); if (!keep.every(row => Array.isArray(row.evidence) && row.evidence.some(item => /live context unavailable/i.test(item)))) throw new Error('missing live-context fallback note'); console.log('fallback evidence note OK');"
+```
+
+Expected:
+- kept rows still use the normal `evidence` array shape
+- at least one evidence item explicitly notes missing live context
+
+- [ ] **Step 7: Run one empty-results Skill pass**
+
+Prepare a temp copy:
+
+```bash
+cp tests/fixtures/round2-empty.json /tmp/trends-radar-round2/round2-empty.json
+```
+
+In a fresh Codex turn, invoke:
+
+```text
+使用 trends-radar 做二轮筛选，输入文件是 /tmp/trends-radar-round2/round2-empty.json
+```
+
+Expected:
+- `/tmp/trends-radar-round2/round2-empty.keep.json` contains `[]`
+- `/tmp/trends-radar-round2/round2-empty.reject.json` contains `[]`
+- the assistant clearly says no candidates were available for round 2
+
+- [ ] **Step 8: Run the full root test suite**
 
 Run:
 
@@ -329,7 +385,7 @@ npm test
 Expected:
 - PASS with all root tests green, including round-2 helper and docs tests
 
-- [ ] **Step 6: Sanity-check git state**
+- [ ] **Step 9: Sanity-check git state**
 
 Run:
 
@@ -339,9 +395,9 @@ git status --short --branch
 
 Expected:
 - branch ahead of `origin/main` only by the new round-2 commits
-- no unexpected untracked files except approved fixture additions
+- no unexpected untracked files, because manual verification artifacts were written under `/tmp`
 
-- [ ] **Step 7: Commit any final doc/test sync**
+- [ ] **Step 10: Commit any final doc/test sync**
 
 If Task 4 exposed a mismatch and you changed tracked files:
 
@@ -350,6 +406,6 @@ git add README.md tests/repo-layout.test.ts
 git commit -m "test: align round 2 docs and verification"
 ```
 
-- [ ] **Step 8: Handoff to finishing workflow**
+- [ ] **Step 11: Handoff to finishing workflow**
 
 Use `superpowers:finishing-a-development-branch` after verification instead of assuming a direct push to `main`.
