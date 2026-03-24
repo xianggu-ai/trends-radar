@@ -1,0 +1,6 @@
+{
+  "default_geo": "US",
+  "default_time": "7d",
+  "default_min_rise": 2000,
+  "default_output_format": "json"
+}

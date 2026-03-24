@@ -2,6 +2,10 @@
 
 This repo ships a custom OpenCLI plugin plus a Codex Skill for collecting Google Trends `Related queries > Rising` data from tabs that are already open in desktop Google Chrome on macOS. `opencli` is the host runtime, but `collect-open-trends-tabs` is provided by this repository's custom OpenCLI plugin, not by upstream OpenCLI.
 
+The public Skill name remains `trends-radar`.
+Detailed workflow rules and operational gotchas live under `skills/trends-radar/references/`.
+Example config and round-2 payloads live under `skills/trends-radar/assets/`.
+
 ## Current Status
 
 - Packaging, install, doctor, and Skill workflow are implemented and tested.
