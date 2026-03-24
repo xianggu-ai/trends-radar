@@ -13,8 +13,16 @@
       "prompt": "Use trends-radar to help me collect rising queries from several Google Trends compare tabs that I already prepared in Chrome."
     },
     {
+      "name": "round2-filter-file",
+      "prompt": "使用 trends-radar 做二轮筛选，输入文件是 /tmp/round1.json。请把短期热点和不适合做站的词筛掉。"
+    },
+    {
       "name": "generic-google-trends-request",
       "prompt": "Can you give me a quick summary of what is trending on Google Trends today in the United States?"
+    },
+    {
+      "name": "generic-keyword-filtering-request",
+      "prompt": "I already have a JSON file of candidate keywords. Can you filter out the short-term event terms and tell me which remaining ones look good for a website?"
     }
   ]
 }

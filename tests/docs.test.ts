@@ -31,10 +31,15 @@ describe('documentation contract', () => {
       './scripts/install.sh',
       'git pull',
       'collect-open-trends-tabs',
+      'Round 2',
       'custom OpenCLI plugin',
       'same geo, time, category, and search property',
       'resolve any CAPTCHA or unusual-traffic interstitial manually',
       'run ~/.codex/skills/trends-radar/scripts/doctor.sh',
+      '使用 trends-radar 做二轮筛选',
+      'node ~/.codex/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json',
+      'round1.keep.json',
+      'round1.reject.json',
     ]);
   });
 
@@ -46,17 +51,31 @@ describe('documentation contract', () => {
 
     expectContainsAll(skill, [
       '使用 trends-radar',
+      '使用 trends-radar 做二轮筛选',
       'install',
       'doctor',
       'collect',
+      'round2',
       '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh',
       '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh',
+      '${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs',
       'If doctor fails, stop',
       'On a fresh machine, install happens from README.md plus scripts/install.sh',
       'If the plugin is missing or damaged on an already-installed machine',
       'same geo, time, category, and search property',
       'Resolve any CAPTCHA or unusual-traffic interstitial manually',
       'opencli google collect-open-trends-tabs --min-rise 2000 -f json',
+      'tool',
+      'game',
+      'content',
+      'mixed',
+      'short_term_event',
+      'noise',
+      'not_siteable',
+      'too_broad',
+      'navigational',
+      'write `[]` to both output files',
+      'no candidates were available for round 2',
     ]);
   });
 
@@ -66,7 +85,7 @@ describe('documentation contract', () => {
     const parsed = JSON.parse(readFileSync(EVALS_PATH, 'utf8')) as EvalFile;
 
     expect(Array.isArray(parsed.evals)).toBe(true);
-    expect(parsed.evals).toHaveLength(4);
+    expect(parsed.evals).toHaveLength(6);
 
     for (const entry of parsed.evals) {
       expect(typeof entry.name).toBe('string');
@@ -80,6 +99,8 @@ describe('documentation contract', () => {
     expect(byName.get('bootstrap-fresh-macos-machine')).toContain('fresh macOS machine');
     expect(byName.get('doctor-apple-events-remediation')).toContain('JavaScript from Apple Events');
     expect(byName.get('collect-rising-queries')).toContain('collect rising queries');
+    expect(byName.get('round2-filter-file')).toContain('二轮筛选');
+    expect(byName.get('generic-keyword-filtering-request')).toContain('filter');
 
     const genericPrompt = byName.get('generic-google-trends-request');
     expect(genericPrompt).toBeDefined();
@@ -88,5 +109,10 @@ describe('documentation contract', () => {
     expect(genericPrompt?.toLowerCase()).not.toContain('trigger');
     expect(genericPrompt?.toLowerCase()).not.toContain('skill');
     expect(genericPrompt?.toLowerCase()).not.toContain('workflow');
+
+    const genericFilterPrompt = byName.get('generic-keyword-filtering-request');
+    expect(genericFilterPrompt).toBeDefined();
+    expect(genericFilterPrompt?.toLowerCase()).toContain('filter');
+    expect(genericFilterPrompt).not.toContain('trends-radar');
   });
 });

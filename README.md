@@ -51,6 +51,29 @@ This refreshes the installed Skill bundle under `~/.codex/skills/trends-radar/` 
 - resolve any CAPTCHA or unusual-traffic interstitial manually
 - After doctor passes, run `opencli google collect-open-trends-tabs --min-rise 2000 -f json`.
 
+## Round 2
+
+Round 2 is a Codex Skill step, not an OpenCLI command.
+
+Use it after round 1 has already produced a JSON file:
+
+```text
+使用 trends-radar 做二轮筛选，输入文件是 /path/to/round1.json
+```
+
+The installed Skill uses:
+
+```bash
+node ~/.codex/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json
+```
+
+Round 2 writes two files next to the input:
+
+- `round1.keep.json`
+- `round1.reject.json`
+
+If the first-stage JSON is valid but has no candidates, round 2 writes `[]` to both output files and tells you no candidates were available for round 2.
+
 ## Troubleshooting
 
 - Installed health check: run `~/.codex/skills/trends-radar/scripts/doctor.sh` whenever the workflow looks unhealthy or before the first collection attempt on a machine.
@@ -58,3 +81,4 @@ This refreshes the installed Skill bundle under `~/.codex/skills/trends-radar/` 
 - If doctor reports an Apple Events failure, enable Chrome's `Allow JavaScript from Apple Events` setting and rerun doctor.
 - If collection fails after doctor passes, re-check browser prep: same geo, time, category, and search property, valid Google Trends compare pages, and any manual CAPTCHA clearance.
 - If extraction still fails on a correctly prepared page, treat that as a collector limitation and update the vendored plugin before relying on the result.
+- If round 2 fails, verify the first-stage JSON path, rerun `node ~/.codex/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`, and confirm the installed Skill bundle is current.

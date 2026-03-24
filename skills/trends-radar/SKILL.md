@@ -13,12 +13,14 @@ Trigger examples:
 - `使用 trends-radar 做体检`
 - `使用 trends-radar 安装`
 - `使用 trends-radar 采集 Google Trends`
+- `使用 trends-radar 做二轮筛选`
 
 ## Actions
 
 - `install`
 - `doctor`
 - `collect`
+- `round2`
 
 ## State-Driven Workflow
 
@@ -29,7 +31,8 @@ Trigger examples:
 5. Before `collect`, require every prepared Google Trends compare tab to use the same geo, time, category, and search property.
 6. Resolve any CAPTCHA or unusual-traffic interstitial manually.
 7. After doctor passes, run or guide `opencli google collect-open-trends-tabs --min-rise 2000 -f json`.
-8. If collection fails, map the failure to environment remediation, install remediation, or collection remediation before trying again.
+8. If the user explicitly asks for round 2, require a first-stage JSON file path and run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
+9. If collection or round 2 fails, map the failure to environment remediation, install remediation, or collection remediation before trying again.
 
 ## install
 
@@ -52,8 +55,42 @@ Trigger examples:
 - Resolve any CAPTCHA or unusual-traffic interstitial manually.
 - Run `opencli google collect-open-trends-tabs --min-rise 2000 -f json` or guide the user to run it.
 
+## round2
+
+- Only continue when the user explicitly asks for round 2, for example `使用 trends-radar 做二轮筛选`.
+- Ask only for the first-stage JSON path if it is missing.
+- Run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
+- Use the helper output to get the normalized candidates plus output paths.
+- If the helper returns no candidates, write `[]` to both output files and tell the user no candidates were available for round 2.
+- Write bare-array JSON outputs to the helper-provided `keepPath` and `rejectPath`.
+- Keep output fields:
+  - `keyword`
+  - `seeds`
+  - `rise_pct`
+  - `site_type`
+  - `why`
+  - `evidence`
+- Reject output fields:
+  - `keyword`
+  - `seeds`
+  - `reject_reason`
+  - `why`
+- Allowed `site_type` values:
+  - `tool`
+  - `game`
+  - `content`
+  - `mixed`
+- Allowed `reject_reason` values:
+  - `short_term_event`
+  - `noise`
+  - `not_siteable`
+  - `too_broad`
+  - `navigational`
+- Use lightweight live context with a hard cap of three evidence items per kept keyword.
+- If live context is unavailable, continue with first-stage context only and include one short fallback note inside the kept row's `evidence` array.
+
 ## Failure Mapping
 
 - Environment remediation: wrong OS, Chrome missing, `opencli` missing, or Apple Events JavaScript not working. Send the user back to `doctor`.
 - Install remediation: the packaged plugin or Skill is missing or corrupted. Rerun `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`, then rerun doctor.
-- Collection remediation: no valid Trends tabs, mismatched scope, blocked pages, or extraction failure. Fix browser state, then rerun the collector command.
+- Collection remediation: no valid Trends tabs, mismatched scope, blocked pages, extraction failure, or round-2 input/output issues. Fix browser state or JSON input, then rerun the relevant command.
