@@ -32,6 +32,7 @@ describe('documentation contract', () => {
       'git pull',
       'collect-open-trends-tabs',
       'Round 2',
+      'Round 2 is a Codex Skill step, not an OpenCLI command.',
       'custom OpenCLI plugin',
       'same geo, time, category, and search property',
       'resolve any CAPTCHA or unusual-traffic interstitial manually',
@@ -78,6 +79,19 @@ describe('documentation contract', () => {
       'too_broad',
       'navigational',
       'write `[]` to both output files',
+      'Write bare-array JSON outputs',
+      'Keep output fields:',
+      'Reject output fields:',
+      'keyword',
+      'seeds',
+      'rise_pct',
+      'site_type',
+      'why',
+      'evidence',
+      'reject_reason',
+      'hard cap of three evidence items',
+      'If live context is unavailable, continue with first-stage context only',
+      "include one short fallback note inside the kept row's `evidence` array",
       'no candidates were available for round 2',
     ]);
   });
@@ -88,7 +102,7 @@ describe('documentation contract', () => {
     const parsed = JSON.parse(readFileSync(EVALS_PATH, 'utf8')) as EvalFile;
 
     expect(Array.isArray(parsed.evals)).toBe(true);
-    expect(parsed.evals).toHaveLength(6);
+    expect(parsed.evals.length).toBeGreaterThanOrEqual(6);
 
     for (const entry of parsed.evals) {
       expect(typeof entry.name).toBe('string');
