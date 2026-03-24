@@ -22,25 +22,26 @@ Trigger examples:
 - `collect`
 - `round2`
 
-## State-Driven Workflow
+## State Machine
 
-1. On a fresh machine, install happens from README.md plus `./scripts/install.sh`.
+1. Fresh-machine bootstrap starts from README.md plus `./scripts/install.sh`.
 2. If the installed Skill bundle or plugin is missing or damaged, run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`.
 3. Before any collection attempt, run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh`.
 4. If doctor fails, stop.
-5. After doctor passes, run or guide `opencli google collect-open-trends-tabs --min-rise 2000 -f json`.
-6. If the user explicitly asks for round 2, require a first-stage JSON file path and run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
-7. If install, doctor, collect, or round 2 fails, consult the runbook and gotchas before retrying.
+5. If doctor passes, choose exactly one next action:
+   - `collect`: run or guide `opencli google collect-open-trends-tabs --min-rise 2000 -f json`
+   - `round2`: run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`
+6. If install, doctor, collect, or round 2 fails, consult the runbook and gotchas before retrying.
 
-## References And Assets
+## Read Path
 
-Read `references/install.md` for install, repair, upgrade, and installed-path details.
-Read `references/collect.md` for collection preparation, scope rules, merge semantics, and CAPTCHA handling.
-Read `references/round2.md` for the keep/reject contract, output schema, and live-context budget.
-Read `references/gotchas.md` for observed failure modes before improvising a fix.
-Read `references/runbook.md` to map symptoms to the next remediation step.
-Use `assets/config.example.json` as the config shape reference.
-Use `assets/keep.example.json` and `assets/reject.example.json` as round-2 output examples.
+- `references/install.md`: install, repair, upgrade, installed-path details
+- `references/collect.md`: compare-tab prep, scope rules, merge semantics, CAPTCHA handling
+- `references/round2.md`: keep/reject contract, output schema, live-context budget
+- `references/gotchas.md`: observed failure modes before improvising a fix
+- `references/runbook.md`: verified live workflow, current limits, symptom -> remediation mapping
+- `assets/config.example.json`: durable config shape
+- `assets/keep.example.json` and `assets/reject.example.json`: round-2 output examples
 
 ## Stable Runtime Data
 
@@ -52,24 +53,27 @@ Use `assets/keep.example.json` and `assets/reject.example.json` as round-2 outpu
 
 - Fresh-machine bootstrap stays in README.md plus `./scripts/install.sh`.
 - Installed repair uses `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/install.sh`.
+- Read `references/install.md` before improvising a new repair path.
 - If install repair fails, stay in install mode and do not proceed to collection.
 
 ## doctor
 
 - Run `${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/doctor.sh` before collection.
+- Read `references/runbook.md` for the verified live prerequisites.
 - If doctor fails, stop.
-- Use the runbook to decide whether the next step is environment remediation or install remediation.
+- Use `references/runbook.md` to decide whether the next step is environment remediation or install remediation.
 
 ## collect
 
 - Only continue after doctor passes.
 - Confirm the user is collecting from prepared Google Trends compare tabs in desktop Chrome.
+- Keep the live-page preparation rules in `references/collect.md`.
 - Run `opencli google collect-open-trends-tabs --min-rise 2000 -f json` or guide the user to run it.
-- Use the collect reference for prep rules and the runbook for failures.
+- Use `references/gotchas.md` and `references/runbook.md` when collection output looks suspicious.
 
 ## round2
 
 - Only continue when the user explicitly asks for round 2, for example `使用 trends-radar 做二轮筛选`.
 - Ask only for the first-stage JSON path if it is missing.
 - Run `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`.
-- Use the round-2 reference and example assets for the judgment contract and output shape.
+- Use `references/round2.md` plus the example assets for the judgment contract and output shape.

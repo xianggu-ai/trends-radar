@@ -11,3 +11,7 @@ This file should capture real observed failures and should grow only when the wo
 - live extractor DOM drift can break selectors even on a correctly prepared page.
 - repeated seed overlap and result-merge confusion can make duplicate rows look like distinct findings.
 - round-2 false positives and false negatives show up when first-stage context is weak or overly event-driven.
+- reading `windows[0].activeTab()` is not safe when multiple Chrome windows are open; the collector must execute against the exact window/tab pair it enumerated.
+- returning full page HTML through Apple Events can overflow the `osascript` stdout buffer; extractor payloads must stay bounded and text-first.
+- a valid worldwide compare page will still emit `geo: ""` in the normalized scope because Google Trends omits `geo` for worldwide URLs.
+- successful pagination depends on the per-seed `Next` buttons that sit under `Showing 1–5 of N queries`; if those controls disappear or change, later pages will silently stop advancing.
