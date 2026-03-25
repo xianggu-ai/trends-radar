@@ -37,6 +37,8 @@ describe('install.sh', () => {
     const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
     const installedInitConfigPath = `${installedRoot}/scripts/init-config.mjs`;
     const installedLogUsagePath = `${installedRoot}/scripts/log-usage.mjs`;
+    const installedNextStepPath = `${installedRoot}/scripts/workflow-next-step.mjs`;
+    const installedReportHelperPath = `${installedRoot}/scripts/report-from-round2.mjs`;
     const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
 
     await execa('bash', ['scripts/install.sh'], {
@@ -66,7 +68,11 @@ describe('install.sh', () => {
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
     expect(readFileSync(installedInitConfigPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/init-config.mjs'), 'utf8'));
     expect(readFileSync(installedLogUsagePath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/log-usage.mjs'), 'utf8'));
+    expect(readFileSync(installedNextStepPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/workflow-next-step.mjs'), 'utf8'));
+    expect(readFileSync(installedReportHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/report-from-round2.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
+    expect(statSync(installedNextStepPath).mode & 0o111).not.toBe(0);
+    expect(statSync(installedReportHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
     expect(existsSync(`${home}/.codex/data/trends-radar`)).toBe(true);
     expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(DEFAULT_CONFIG);
@@ -152,6 +158,8 @@ describe('install.sh', () => {
     const staleFile = `${opencliHome}/plugins/google-trends-rising/stale.txt`;
     const installedRoot = `${codexHome}/skills/trends-radar`;
     const installedHelperPath = `${installedRoot}/scripts/round2-prepare.mjs`;
+    const installedNextStepPath = `${installedRoot}/scripts/workflow-next-step.mjs`;
+    const installedReportHelperPath = `${installedRoot}/scripts/report-from-round2.mjs`;
     const stableConfigPath = `${home}/.codex/data/trends-radar/config.json`;
     const existingConfig = {
       default_geo: 'GB',
@@ -192,7 +200,11 @@ describe('install.sh', () => {
     expect(readFileSync(`${installedRoot}/references/install.md`, 'utf8')).toContain('Install Reference');
     expect(readFileSync(`${installedRoot}/assets/config.example.json`, 'utf8')).toContain('default_geo');
     expect(readFileSync(installedHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/round2-prepare.mjs'), 'utf8'));
+    expect(readFileSync(installedNextStepPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/workflow-next-step.mjs'), 'utf8'));
+    expect(readFileSync(installedReportHelperPath, 'utf8')).toBe(readFileSync(join(ROOT, 'scripts/report-from-round2.mjs'), 'utf8'));
     expect(statSync(installedHelperPath).mode & 0o111).not.toBe(0);
+    expect(statSync(installedNextStepPath).mode & 0o111).not.toBe(0);
+    expect(statSync(installedReportHelperPath).mode & 0o111).not.toBe(0);
     expect(statSync(join(ROOT, 'scripts/round2-prepare.mjs')).mode & 0o111).toBe(0);
     expect(JSON.parse(readFileSync(stableConfigPath, 'utf8'))).toEqual(existingConfig);
     expect(readUsageLog(home).map(({ action, status }) => ({ action, status }))).toEqual([

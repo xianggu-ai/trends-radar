@@ -12,6 +12,8 @@ Stable runtime data lives under `~/.codex/data/trends-radar/`.
 That directory keeps durable files such as `config.json` and the append-only `usage.jsonl`.
 The installed `install` and `doctor` scripts append status records to `usage.jsonl`.
 This runtime memory survives upgrades because `./scripts/install.sh` refreshes the installed bundle separately from the stable data directory.
+The repo also ships `scripts/workflow-next-step.mjs` and `scripts/report-from-round2.mjs` as optional execution aids.
+Those helpers are not a rigid run-all pipeline. They reduce workflow reconstruction cost between agents without replacing human or agent judgment.
 
 ## Current Status
 
@@ -86,6 +88,15 @@ The installed Skill uses:
 node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json
 ```
 
+Optional execution aids:
+
+```bash
+node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/workflow-next-step.mjs --round1 /path/to/round1.json
+node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/report-from-round2.mjs --round1 /path/to/round1.json --keep /path/to/round1.keep.json --reject /path/to/round1.reject.json
+```
+
+These helpers are optional execution aids. They are not a rigid run-all pipeline and they do not replace the keep/reject judgment itself.
+
 Round 2 writes two files next to the input:
 
 - `round1.keep.json`
@@ -101,3 +112,4 @@ If the first-stage JSON is valid but has no candidates, round 2 writes `[]` to b
 - If collection fails after doctor passes, re-check browser prep: same geo, time, category, and search property, valid Google Trends compare pages, and any manual CAPTCHA clearance.
 - If extraction still fails on a correctly prepared page, treat that as a collector limitation and update the vendored plugin before relying on the result.
 - If round 2 fails, verify the first-stage JSON path, rerun `node ${CODEX_HOME:-$HOME/.codex}/skills/trends-radar/scripts/round2-prepare.mjs /path/to/round1.json`, and confirm the installed Skill bundle is current.
+- If another agent needs help deciding the next step, use `workflow-next-step.mjs`; if it already has keep/reject files, use `report-from-round2.mjs` to scaffold the report without forcing a one-click workflow.

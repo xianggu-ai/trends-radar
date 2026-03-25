@@ -13,6 +13,13 @@ Use this file for the verified macOS + Chrome + OpenCLI collection path. It reco
 7. Let the collector drive the visible pages. The browser will visibly activate tabs and click each query paginator's `Next` button when more than five `Rising` rows exist.
 8. Use the JSON output as the first-stage result set for round 2.
 
+## Workflow Routing
+
+- `workflow-next-step.mjs` is the optional routing helper when an agent needs artifact-aware next-step guidance without a rigid pipeline.
+- A typical route is `collect -> round2 -> report`, but the helper should only recommend the next likely action.
+- `report-from-round2.mjs` is the optional report helper once keep/reject files already exist.
+- The agent still decides whether the current artifacts are trustworthy enough to continue.
+
 ## What The Collector Now Does
 
 - Reads the real Google Trends compare tabs that are already open in Chrome.
@@ -43,6 +50,8 @@ Use this file for the verified macOS + Chrome + OpenCLI collection path. It reco
 | tabs are found but every page reports `no_data` | Treat it as extractor drift or wrong page state. Re-check that the pages are true compare pages and inspect the vendored extractor before trusting output. |
 | collection succeeds but misses later rows | Confirm the page still shows `Next` buttons for `Related queries`, then re-run after checking for DOM drift or widget changes. |
 | round-2 input/output problems | Rebuild the normalized helper output, then validate the keep/reject contract from `references/round2.md`. |
+| unsure what to do next after a partial run | Use `workflow-next-step.mjs` to inspect artifact state, then decide whether the next move is `doctor`, `collect`, `round2`, or `report`. |
+| keep/reject are done but the report is missing or inconsistent | Use `report-from-round2.mjs` to scaffold the report, then edit the result instead of freehanding the whole structure again. |
 
 ## Live Notes From The First Successful Run
 
